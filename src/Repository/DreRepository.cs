@@ -110,13 +110,13 @@ namespace api_infor_cell.src.Repository
 
                 foreach (var account in accounts)
                 {
-                    if (accountValues.TryGetValue(account.Id, out decimal value) && !string.IsNullOrEmpty(account.DreCategory))
-                    {
-                        if (categories.ContainsKey(account.DreCategory))
-                        {
-                            categories[account.DreCategory] += value;
-                        }
-                    }
+                    // if (accountValues.TryGetValue(account.Id, out decimal value) && !string.IsNullOrEmpty(account.DreCategory))
+                    // {
+                    //     if (categories.ContainsKey(account.DreCategory))
+                    //     {
+                    //         categories[account.DreCategory] += value;
+                    //     }
+                    // }
                 }
 
                 // ── Calcular DRE ──────────────────────────────────────────────

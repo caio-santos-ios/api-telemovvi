@@ -18,6 +18,14 @@ namespace api_infor_cell.src.Controllers
             ResponseApi<dynamic?> response = await service.GetAllAsync(new(Request.Query));
             return StatusCode(response.StatusCode, new { response.Result });
         }
+        
+        [Authorize]
+        [HttpGet("select")]
+        public async Task<IActionResult> GetSelect()
+        {
+            ResponseApi<List<dynamic>> response = await service.GetSelectAsync(new(Request.Query));
+            return StatusCode(response.StatusCode, new { response.Result });
+        }
 
         [Authorize]
         [HttpGet("tree")]
@@ -58,18 +66,18 @@ namespace api_infor_cell.src.Controllers
         }
 
         [Authorize]
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(string id, [FromBody] ChartOfAccounts chartOfAccounts)
+        [HttpPut]
+        public async Task<IActionResult> Update([FromBody] ChartOfAccounts chartOfAccounts)
         {
-            ResponseApi<ChartOfAccounts?> response = await service.UpdateAsync(id, chartOfAccounts);
+            ResponseApi<ChartOfAccounts?> response = await service.UpdateAsync(chartOfAccounts);
             return StatusCode(response.StatusCode, new { response.Message, response.Result });
         }
 
         [Authorize]
         [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id, [FromBody] RequestDTO requestDTO)
+        public async Task<IActionResult> Delete(string id)
         {
-            ResponseApi<ChartOfAccounts?> response = await service.DeleteAsync(id, requestDTO);
+            ResponseApi<ChartOfAccounts?> response = await service.DeleteAsync(id);
             return StatusCode(response.StatusCode, new { response.Message, response.Result });
         }
     }

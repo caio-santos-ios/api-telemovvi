@@ -32,6 +32,21 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Falha ao buscar Plano de Contas");
             }
         }
+        public async Task<ResponseApi<List<dynamic>>> GetSelectAsync(GetAllDTO request)
+        {
+            try
+            {
+                PaginationUtil<ChartOfAccounts> pagination = new(request.QueryParams);
+
+                ResponseApi<List<dynamic>> list = await repository.GetSelectAsync(pagination);
+
+                return new(list.Data);
+            }
+            catch
+            {
+                return new(null, 500, "Falha ao buscar Plano de Contas");
+            }
+        }
 
         public async Task<ResponseApi<dynamic?>> GetByIdAsync(string id)
         {
@@ -50,8 +65,8 @@ namespace api_infor_cell.src.Services
         {
             try
             {
-                long nextCode = (await repository.GetNextCodeAsync(planId, companyId)).Data;
-                return new(nextCode);
+                // long nextCode = (await repository.GetNextCodeAsync(planId, companyId)).Data;
+                return new();
             }
             catch
             {
@@ -64,6 +79,8 @@ namespace api_infor_cell.src.Services
             try
             {
                 chartOfAccounts.CreatedAt = DateTime.UtcNow;
+                long nextCode = (await repository.GetNextCodeAsync(chartOfAccounts.Plan, chartOfAccounts.Company, chartOfAccounts.Store, chartOfAccounts.Type, chartOfAccounts.GroupDRE)).Data;
+                chartOfAccounts.Code = $"{chartOfAccounts.Account}.{nextCode.ToString().PadLeft(3, '0')}";
                 ResponseApi<ChartOfAccounts?> response = await repository.CreateAsync(chartOfAccounts);
                 return new(response.Data, response.StatusCode, "Conta criada com sucesso");
             }
@@ -73,23 +90,25 @@ namespace api_infor_cell.src.Services
             }
         }
 
-        public async Task<ResponseApi<ChartOfAccounts?>> UpdateAsync(string id, ChartOfAccounts chartOfAccounts)
+        public async Task<ResponseApi<ChartOfAccounts?>> UpdateAsync(ChartOfAccounts chartOfAccounts)
         {
             try
             {
-                ResponseApi<ChartOfAccounts?> existingAccount = await repository.GetByIdAsync(id);
+                ResponseApi<ChartOfAccounts?> existingAccount = await repository.GetByIdAsync(chartOfAccounts.Id);
 
                 if (existingAccount.Data is null)
                 {
                     return new(null, 404, "Conta não encontrada");
                 }
 
-                chartOfAccounts.Id = id;
-                chartOfAccounts.UpdatedAt = DateTime.UtcNow;
-                chartOfAccounts.CreatedAt = existingAccount.Data.CreatedAt;
-                chartOfAccounts.CreatedBy = existingAccount.Data.CreatedBy;
+                existingAccount.Data.UpdatedAt = DateTime.UtcNow;
+                existingAccount.Data.UpdatedBy = chartOfAccounts.UpdatedBy;
+                existingAccount.Data.Name = chartOfAccounts.Name;
+                existingAccount.Data.Type = chartOfAccounts.Type;
+                existingAccount.Data.Account = chartOfAccounts.Account;
+                existingAccount.Data.GroupDRE = chartOfAccounts.GroupDRE;
 
-                ResponseApi<ChartOfAccounts?> response = await repository.UpdateAsync(chartOfAccounts);
+                ResponseApi<ChartOfAccounts?> response = await repository.UpdateAsync(existingAccount.Data);
                 return new(response.Data, response.StatusCode, "Conta atualizada com sucesso");
             }
             catch
@@ -98,7 +117,7 @@ namespace api_infor_cell.src.Services
             }
         }
 
-        public async Task<ResponseApi<ChartOfAccounts?>> DeleteAsync(string id, RequestDTO requestDTO)
+        public async Task<ResponseApi<ChartOfAccounts?>> DeleteAsync(string id)
         {
             try
             {
@@ -110,7 +129,6 @@ namespace api_infor_cell.src.Services
                 }
 
                 existingAccount.Data.DeletedAt = DateTime.UtcNow;
-                existingAccount.Data.DeletedBy = requestDTO.DeletedBy;
 
                 ResponseApi<ChartOfAccounts> response = await repository.DeleteAsync(id);
                 return new(response.Data, response.StatusCode, "Conta excluída com sucesso");

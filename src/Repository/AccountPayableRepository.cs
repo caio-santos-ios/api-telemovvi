@@ -24,16 +24,19 @@ namespace api_infor_cell.src.Repository
                     new("$limit", pagination.Limit),
 
                     MongoUtil.Lookup("payment_methods", ["$paymentMethodId"], ["$_id"], "_paymentMethod", [["deleted", false]], 1),
+                    MongoUtil.Lookup("suppliers", ["$supplierId"], ["$_id"], "_supplier", [["deleted", false]], 1),
 
                     new("$addFields", new BsonDocument
                     {
                         {"id", new BsonDocument("$toString", "$_id")},
                         {"paymentMethodName", MongoUtil.First("_paymentMethod.name")},
+                        {"supplierName", MongoUtil.First("_supplier.corporateName")},
                     }),
                     new("$project", new BsonDocument
                     {
                         {"_id", 0},
                         {"_paymentMethod", 0},
+                        {"_supplier", 0},
                     }),
                     new("$sort", pagination.PipelineSort),
                 };

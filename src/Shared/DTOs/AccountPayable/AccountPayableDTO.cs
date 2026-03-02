@@ -33,6 +33,7 @@ namespace api_infor_cell.src.Shared.DTOs
         public DateTime DueDate { get; set; }
         public DateTime IssueDate { get; set; }
         public string Notes { get; set; } = string.Empty;
+        public string ChartOfAccountId { get; set; } = string.Empty;
     }
 
     public class UpdateAccountPayableDTO : RequestDTO
@@ -68,6 +69,7 @@ namespace api_infor_cell.src.Shared.DTOs
         public DateTime DueDate { get; set; }
 
         public string Notes { get; set; } = string.Empty;
+        public string ChartOfAccountId { get; set; } = string.Empty;
     }
 
     public class PayAccountPayableDTO

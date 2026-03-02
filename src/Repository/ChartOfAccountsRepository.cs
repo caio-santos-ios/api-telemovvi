@@ -20,18 +20,17 @@ namespace api_infor_cell.src.Repository
                 {
                     new("$match", pagination.PipelineFilter),
                     new("$sort", pagination.PipelineSort),
-                    new("$skip", pagination.Skip),
-                    new("$limit", pagination.Limit),
-                    MongoUtil.Lookup("chart_of_accounts", ["$parentId"], ["$_id"], "_parent", [["deleted", false]], 1),
-                    new("$addFields", new BsonDocument
-                    {
-                        {"id", new BsonDocument("$toString", "$_id")},
-                        {"parentName", MongoUtil.First("_parent.name")},
-                    }),
                     new("$project", new BsonDocument
                     {
                         {"_id", 0},
-                        {"_parent", 0},
+                        {"id", new BsonDocument("$toString", "$_id")},
+                        {"name", 1},
+                        {"code", 1},
+                        {"type", 1},
+                        {"groupDRE", 1},
+                        {"account", 1},
+                        {"level", 1},
+                        {"createdAt", 1},
                     }),
                     new("$sort", pagination.PipelineSort),
                 };
@@ -45,7 +44,41 @@ namespace api_infor_cell.src.Repository
                 return new(null, 500, "Falha ao buscar Plano de Contas");
             }
         }
+        public async Task<ResponseApi<List<dynamic>>> GetSelectAsync(PaginationUtil<ChartOfAccounts> pagination)
+        {
+            try
+            {
+                List<BsonDocument> pipeline = new()
+                {
+                    new("$match", pagination.PipelineFilter),
+                    new("$sort", pagination.PipelineSort),
+                    MongoUtil.Lookup("chart_of_accounts", ["$parentId"], ["$_id"], "_parent", [["deleted", false]], 1),
+                    new("$addFields", new BsonDocument
+                    {
+                        {"id", new BsonDocument("$toString", "$_id")},
+                        {"parentName", MongoUtil.First("_parent.name")},
+                    }),
+                    new("$project", new BsonDocument
+                    {
+                        {"_id", 0},
+                        {"id", new BsonDocument("$toString", "$_id")},
+                        {"name", 1},
+                        {"code", 1},
+                        {"parentName", 1},
+                        {"level", 1},
+                    }),
+                    new("$sort", pagination.PipelineSort),
+                };
 
+                List<BsonDocument> results = await context.ChartOfAccounts.Aggregate<BsonDocument>(pipeline).ToListAsync();
+                List<dynamic> list = results.Select(doc => BsonSerializer.Deserialize<dynamic>(doc)).ToList();
+                return new(list);
+            }
+            catch
+            {
+                return new(null, 500, "Falha ao buscar Plano de Contas");
+            }
+        }
         public async Task<ResponseApi<dynamic?>> GetByIdAggregateAsync(string id)
         {
             try
@@ -76,7 +109,6 @@ namespace api_infor_cell.src.Repository
                 return new(null, 500, "Falha ao buscar Conta");
             }
         }
-
         public async Task<ResponseApi<ChartOfAccounts?>> GetByIdAsync(string id)
         {
             try
@@ -94,7 +126,6 @@ namespace api_infor_cell.src.Repository
                 return new(null, 500, "Falha ao buscar Conta");
             }
         }
-
         public async Task<int> GetCountDocumentsAsync(PaginationUtil<ChartOfAccounts> pagination)
         {
             try
@@ -107,22 +138,22 @@ namespace api_infor_cell.src.Repository
                 return 0;
             }
         }
-
-        public async Task<ResponseApi<long>> GetNextCodeAsync(string planId, string companyId)
+        public async Task<ResponseApi<long>> GetNextCodeAsync(string plan, string company, string store, string type, string groupDRE)
         {
             try
             {
                 FilterDefinition<ChartOfAccounts> filter = Builders<ChartOfAccounts>.Filter.And(
-                    Builders<ChartOfAccounts>.Filter.Eq("plan", planId),
-                    Builders<ChartOfAccounts>.Filter.Eq("company", companyId),
+                    Builders<ChartOfAccounts>.Filter.Eq("plan", plan),
+                    Builders<ChartOfAccounts>.Filter.Eq("company", company),
+                    Builders<ChartOfAccounts>.Filter.Eq("store", store),
+                    Builders<ChartOfAccounts>.Filter.Eq("type", type),
+                    Builders<ChartOfAccounts>.Filter.Eq("groupDRE", groupDRE),
                     Builders<ChartOfAccounts>.Filter.Eq("deleted", false)
                 );
 
-                SortDefinition<ChartOfAccounts> sort = Builders<ChartOfAccounts>.Sort.Descending("code");
-                ChartOfAccounts? lastRecord = await context.ChartOfAccounts.Find(filter).Sort(sort).Limit(1).FirstOrDefaultAsync();
+                long count = await context.ChartOfAccounts.CountDocumentsAsync(filter);
 
-                long nextCode = lastRecord is not null && long.TryParse(lastRecord.Code, out long code) ? code + 1 : 1;
-                return new(nextCode);
+                return new(count + 1);
             }
             catch
             {
@@ -203,7 +234,7 @@ namespace api_infor_cell.src.Repository
                 var accountsDict = allAccounts.ToDictionary(a => a.Id);
                 var tree = new List<dynamic>();
 
-                foreach (var account in allAccounts.Where(a => string.IsNullOrEmpty(a.ParentId)))
+                foreach (var account in allAccounts.Where(a => !a.Deleted))
                 {
                     tree.Add(BuildTree(account, accountsDict));
                 }
@@ -219,7 +250,7 @@ namespace api_infor_cell.src.Repository
         private dynamic BuildTree(ChartOfAccounts account, Dictionary<string, ChartOfAccounts> allAccounts)
         {
             var children = allAccounts.Values
-                .Where(a => a.ParentId == account.Id)
+                .Where(a => !a.Deleted)
                 .Select(child => BuildTree(child, allAccounts))
                 .ToList();
 
@@ -229,10 +260,10 @@ namespace api_infor_cell.src.Repository
                 code = account.Code,
                 name = account.Name,
                 type = account.Type,
-                dreCategory = account.DreCategory,
-                showInDre = account.ShowInDre,
+                // dreCategory = account.DreCategory,
+                // showInDre = account.ShowInDre,
                 level = account.Level,
-                isAnalytical = account.IsAnalytical,
+                // isAnalytical = account.IsAnalytical,
                 children
             };
         }

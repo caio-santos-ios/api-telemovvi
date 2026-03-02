@@ -37,6 +37,7 @@ namespace api_infor_cell.src.Shared.DTOs
         public DateTime IssueDate { get; set; }
 
         public bool IsPaymented {get; set; } = false;
+        public string ChartOfAccountId { get; set; } = string.Empty;
     }
 
     public class UpdateAccountReceivableDTO : RequestDTO
@@ -72,6 +73,7 @@ namespace api_infor_cell.src.Shared.DTOs
         public DateTime DueDate { get; set; }
 
         public string Notes { get; set; } = string.Empty;
+        public string ChartOfAccountId { get; set; } = string.Empty;
     }
 
     public class PayAccountReceivableDTO
