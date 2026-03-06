@@ -25,7 +25,6 @@ namespace api_infor_cell.src.Repository
                 new("$limit", pagination.Limit),
 
                 MongoUtil.Lookup("customers", ["$customerId"], ["$_id"], "_customer", [["deleted", false]], 1),
-                MongoUtil.Lookup("employees", ["$sellerId"], ["$_id"], "_seller", [["deleted", false]], 1),
                 MongoUtil.Lookup("users", ["$sellerId"], ["$_id"], "_user", [["deleted", false]], 1),
 
                 new("$addFields", new BsonDocument
@@ -33,18 +32,12 @@ namespace api_infor_cell.src.Repository
                     {"id", new BsonDocument("$toString", "$_id")},
                     {"customerName", MongoUtil.First("_customer.tradeName")},
                     {"userName", MongoUtil.First("_user.name")},
-                    {"employeeName", MongoUtil.First("_seller.name")},
-                    {"quantity", new BsonDocument("$toInt", "$quantity")},
-                    {"total", new BsonDocument("$toInt", "$total")},
-                    {"value", new BsonDocument("$toInt", "$value")},
-                    {"discount", new BsonDocument("$toInt", "$discount")},
                 }),
                 new("$project", new BsonDocument
                 {
                     {"_id", 0}, 
                     {"_customer", 0}, 
                     {"_user", 0}, 
-                    {"_seller", 0}, 
                 }),
                 new("$sort", pagination.PipelineSort),
             };
@@ -130,6 +123,7 @@ namespace api_infor_cell.src.Repository
                     {"storeDocument", MongoUtil.First("storeDocument")},
                     {"customerName", MongoUtil.First("customerName")},
                     {"createdAt", MongoUtil.First("createdAt")},
+                    {"payment", MongoUtil.First("payment")},
                     {"total", MongoUtil.First("total")},
                     {"items", new BsonDocument("$push", new BsonDocument 
                         {
@@ -139,7 +133,7 @@ namespace api_infor_cell.src.Repository
                             {"value", "$_items.value"},
                             {"total", "$_items.total"}
                         }
-                    )}
+                    )},
                 }),
 
                 new("$project", new BsonDocument
@@ -152,7 +146,8 @@ namespace api_infor_cell.src.Repository
                     {"customerName", 1},
                     {"createdAt", 1},
                     {"total", 1},
-                    {"items", 1}
+                    {"items", 1},
+                    {"payment", 1}
                 })
             ];
 

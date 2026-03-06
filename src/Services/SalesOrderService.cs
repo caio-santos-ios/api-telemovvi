@@ -73,27 +73,27 @@ namespace api_infor_cell.src.Services
 
                 if(response.Data is null) return new(null, 400, "Falha ao criar Pedido de Venda.");
                 
-                if(request.CreateItem)
-                {
-                    await salesOrderItemRepository.CreateAsync(new ()
-                    {
-                        Plan = request.Plan,
-                        Company = request.Company,
-                        Store = request.Store,
-                        DiscountType = request.DiscountType,
-                        DiscountValue = request.DiscountValue,
-                        ProductId = request.ProductId,
-                        Quantity = request.Quantity,
-                        Value = request.Value,
-                        Total = request.Total,
-                        CreatedBy = request.CreatedBy,
-                        CreatedAt = DateTime.UtcNow,
-                        SalesOrderId = response.Data.Id,
-                        VariationId = request.VariationId,
-                        CodeVariation = request.CodeVariation,
-                        Serial = request.Serial
-                    });
-                };
+                // if(request.CreateItem)
+                // {
+                //     await salesOrderItemRepository.CreateAsync(new ()
+                //     {
+                //         Plan = request.Plan,
+                //         Company = request.Company,
+                //         Store = request.Store,
+                //         DiscountType = request.DiscountType,
+                //         DiscountValue = request.DiscountValue,
+                //         ProductId = request.ProductId,
+                //         Quantity = request.Quantity,
+                //         Value = request.Value,
+                //         Total = request.Total,
+                //         CreatedBy = request.CreatedBy,
+                //         CreatedAt = DateTime.UtcNow,
+                //         SalesOrderId = response.Data.Id,
+                //         VariationId = request.VariationId,
+                //         CodeVariation = request.CodeVariation,
+                //         Serial = request.Serial
+                //     });
+                // };
                 
                 return new(response.Data, 201, "Pedido de Venda criado com sucesso.");
             }
@@ -110,7 +110,7 @@ namespace api_infor_cell.src.Services
             try
             {
                 ResponseApi<SalesOrder?> salesOrderResponse = await repository.GetByIdAsync(request.Id);
-                if(salesOrderResponse.Data is null) return new(null, 404, "Falha ao atualizar");
+                if(salesOrderResponse.Data is null) return new(null, 404, "Falha ao atualizar 1");
                 
                 salesOrderResponse.Data.UpdatedAt = DateTime.UtcNow;
                 salesOrderResponse.Data.UpdatedBy = request.UpdatedBy;
@@ -131,7 +131,7 @@ namespace api_infor_cell.src.Services
             try
             {
                 ResponseApi<SalesOrder?> salesOrderResponse = await repository.GetByIdAsync(request.Id);
-                if(salesOrderResponse.Data is null) return new(null, 404, "Falha ao finalizar Pedido de Venda 2 ");
+                if(salesOrderResponse.Data is null) return new(null, 404, "Falha ao finalizar Pedido de Venda");
 
                 ResponseApi<List<SalesOrderItem>> items = await salesOrderItemRepository.GetBySalesOrderIdAsync(request.Id, salesOrderResponse.Data.Plan, salesOrderResponse.Data.Company, salesOrderResponse.Data.Store);
                 if(items.Data is not null)
@@ -223,8 +223,12 @@ namespace api_infor_cell.src.Services
                     DiscountValue = request.DiscountValue,
                     Freight = request.Freight,
                     NumberOfInstallments = request.NumberOfInstallments,
-                    PaymentMethodId = request.PaymentMethodId
+                    PaymentMethodId = request.PaymentMethodId,
+                    Tax = request.Tax
                 };
+                salesOrderResponse.Data.SubTotal = request.SubTotal;
+                salesOrderResponse.Data.Total = request.Total;
+
                 ResponseApi<SalesOrder?> response = await repository.UpdateAsync(salesOrderResponse.Data);
                 if(!response.IsSuccess) return new(null, 400, "Falha ao finalizar Pedido de Venda");
                 

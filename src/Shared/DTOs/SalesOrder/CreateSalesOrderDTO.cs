@@ -4,8 +4,8 @@ namespace api_infor_cell.src.Shared.DTOs
 {
     public class CreateSalesOrderDTO : RequestDTO
     {
-        [Required(ErrorMessage = "O Produto é obrigatório.")]
-        [Display(Order = 1)]
+        // [Required(ErrorMessage = "O Produto é obrigatório.")]
+        // [Display(Order = 1)]
         public string ProductId { get; set; } = string.Empty;
         public string CustomerId { get; set; } = string.Empty;
 

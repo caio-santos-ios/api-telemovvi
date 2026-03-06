@@ -22,6 +22,10 @@ namespace api_infor_cell.src.Models
         [BsonElement("total")]
         
         public decimal Total { get; set; }
+
+        [BsonElement("subTotal")]
+        
+        public decimal SubTotal { get; set; }
         
         [BsonElement("quantity")]
         
@@ -63,5 +67,8 @@ namespace api_infor_cell.src.Models
         
         [BsonElement("discountType")]
         public string DiscountType { get; set; } = string.Empty;
+
+        [BsonElement("tax")]
+        public decimal Tax { get; set; }
     }
 }

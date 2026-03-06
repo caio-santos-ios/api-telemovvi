@@ -20,8 +20,8 @@ namespace api_infor_cell.src.Shared.DTOs
         [Display(Order = 2)]
         public string CategoryId { get; set; } = string.Empty;
         
-        [Required(ErrorMessage = "A Marca é obrigatória.")]
-        [Display(Order = 3)]
+        // [Required(ErrorMessage = "A Marca é obrigatória.")]
+        // [Display(Order = 3)]
         public string BrandId { get; set; } = string.Empty;
         public string MoveStock { get; set; } = string.Empty;
         public int QuantityStock { get; set; }

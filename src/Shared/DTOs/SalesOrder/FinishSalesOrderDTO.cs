@@ -14,5 +14,8 @@ namespace api_infor_cell.src.Shared.DTOs
         public string Currier { get; set; } = string.Empty;
         public decimal DiscountValue { get; set; }
         public string DiscountType { get; set; } = string.Empty;
+        public decimal Total { get; set; }
+        public decimal SubTotal { get; set; }
+        public decimal Tax { get; set; }
     }
 }
