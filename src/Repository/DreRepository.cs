@@ -110,7 +110,7 @@ namespace api_infor_cell.src.Repository
                     {
                         periodo = new { inicio = startDate.ToString("dd/MM/yyyy"), fim = endDate.ToString("dd/MM/yyyy"), regime },
                         meses   = mesesLabels,
-                        secoes  = Array.Empty<object>(),
+                        secoes  = new { receitas = 0, despesas = 0},
                         totalizadores = new { },
                         indicadores   = new { margemBruta = 0, margemLiquida = 0 }
                     });

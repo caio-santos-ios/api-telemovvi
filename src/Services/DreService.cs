@@ -1,5 +1,6 @@
 using api_infor_cell.src.Interfaces;
 using api_infor_cell.src.Models.Base;
+using api_infor_cell.src.Shared.Utils;
 
 namespace api_infor_cell.src.Services
 {
@@ -28,7 +29,7 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic> response = await repository.GenerateAsync(
                     planId, companyId, storeId, startDate, endDate, regime
                 );
-
+                
                 return new(response.Data);
             }
             catch

@@ -103,9 +103,17 @@ namespace api_infor_cell.src.Services
             item.UpdatedBy = request.CreatedBy;
             await salesOrderItemRepository.UpdateAsync(item);
 
-            // 5. Cancela o pedido se todos os itens foram devolvidos
             ResponseApi<List<SalesOrderItem>> allItems = await salesOrderItemRepository.GetBySalesOrderIdAsync(item.SalesOrderId, request.Plan, request.Company, request.Store);
+
             bool allReturned = allItems.Data is null || allItems.Data.Count == 0;
+            if(allItems.Data is not null)
+            {
+                if(allItems.Data.Count == 1)
+                {
+                    allReturned = true;
+                }
+            }
+
             if (allReturned)
             {
                 order.Status     = "Cancelado - Produto Devolvido";

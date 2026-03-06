@@ -102,6 +102,11 @@ namespace api_infor_cell.src.Configuration
             CreateMap<CreateSituationDTO, Situation>().ReverseMap();
             CreateMap<UpdateUserDTO, Employee>().ReverseMap();
             CreateMap<UpdateUserDTO, User>().ReverseMap();
+
+            CreateMap<CreateBudgetDTO, Budget>().ReverseMap();
+            CreateMap<UpdateBudgetDTO, Budget>().ReverseMap();
+            CreateMap<CreateBudgetItemDTO, BudgetItem>().ReverseMap();
+            CreateMap<UpdateBudgetItemDTO, BudgetItem>().ReverseMap();
             #endregion
 
             #region FINANCIAL

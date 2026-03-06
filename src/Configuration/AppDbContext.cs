@@ -159,6 +159,9 @@ namespace api_infor_cell.src.Configuration
         {
             get { return Database.GetCollection<Situation>("situations"); }
         }       
+        
+        public IMongoCollection<Budget> Budgets => Database.GetCollection<Budget>("budgets");
+        public IMongoCollection<BudgetItem> BudgetItems => Database.GetCollection<BudgetItem>("budget_items");
         #endregion
 
         #region FINANCIAL
