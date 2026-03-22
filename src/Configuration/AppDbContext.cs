@@ -187,6 +187,10 @@ namespace api_infor_cell.src.Configuration
         #endregion
 
         #region FISCAL
+        public IMongoCollection<EcommerceConfig> EcommerceConfigs => Database.GetCollection<EcommerceConfig>("ecommerce_configs");
+        public IMongoCollection<EcommerceCustomer> EcommerceCustomers => Database.GetCollection<EcommerceCustomer>("ecommerce_customers");
+        public IMongoCollection<EcommerceOrder> EcommerceOrders => Database.GetCollection<EcommerceOrder>("ecommerce_orders");
+
         public IMongoCollection<FiscalDocument> FiscalDocuments => Database.GetCollection<FiscalDocument>("fiscal_documents");
 
         public IMongoCollection<FiscalEvent> FiscalEvents => Database.GetCollection<FiscalEvent>("fiscal_events");

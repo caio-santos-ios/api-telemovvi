@@ -123,6 +123,72 @@ namespace api_infor_cell.src.Handlers
             return resp.IsSuccessStatusCode;
         }
 
+
+        // ─── SINGLE PAYMENT (e-commerce) ─────────────────────────────────────────
+
+        /// <summary>Cria um pagamento avulso no Asaas para pedidos do e-commerce (PIX, Boleto ou Cartão)</summary>
+        public async Task<AsaasPaymentDetailResponse?> CreateSinglePaymentAsync(
+            string customerId,
+            decimal value,
+            string billingType,
+            string description,
+            string dueDate,
+            AsaasCardData? card = null)
+        {
+            using var client = CreateClient();
+
+            object body;
+
+            if (billingType == "CREDIT_CARD" && card is not null)
+            {
+                body = new
+                {
+                    customer = customerId,
+                    billingType,
+                    value,
+                    dueDate,
+                    description,
+                    creditCard = new
+                    {
+                        holderName = card.HolderName,
+                        number     = card.Number,
+                        expiryMonth = card.ExpiryMonth,
+                        expiryYear  = card.ExpiryYear,
+                        ccv         = card.Cvv
+                    },
+                    creditCardHolderInfo = new
+                    {
+                        name          = card.HolderName,
+                        email         = card.HolderEmail,
+                        cpfCnpj       = card.HolderCpfCnpj,
+                        postalCode    = card.HolderPostalCode,
+                        addressNumber = card.HolderAddressNumber,
+                        phone         = card.HolderPhone
+                    }
+                };
+            }
+            else
+            {
+                body = new
+                {
+                    customer    = customerId,
+                    billingType,
+                    value,
+                    dueDate,
+                    description
+                };
+            }
+
+            var content = new StringContent(
+                JsonSerializer.Serialize(body),
+                System.Text.Encoding.UTF8,
+                "application/json");
+
+            var resp     = await client.PostAsync($"{_baseUrl}/payments", content);
+            var respJson = await resp.Content.ReadAsStringAsync();
+            return JsonSerializer.Deserialize<AsaasPaymentDetailResponse>(respJson, JsonOpts);
+        }
+
         // ─── PAYMENTS (para obter QR Code PIX / Boleto) ───────────────────────────
 
         /// <summary>Busca histórico de pagamentos de uma assinatura (últimas 12 cobranças)</summary>
