@@ -26,23 +26,27 @@ namespace api_infor_cell.src.Services
                 if (string.IsNullOrEmpty(request.Password)) return new(null, 400, "Senha é obrigatória");
                 
                 ResponseApi<User?> res = await GetUserToken(request.Email);
-
                 if(res.Data is null) return new(null, 400, res.Message);
                 
                 User user = res.Data;
+
+                // FIX 1: verificar conta confirmada e bloqueio
+                if (!user.ValidatedAccess) return new(null, 400, "Conta não confirmada. Verifique seu e-mail.");
+                if (user.Blocked) return new(null, 400, "Conta bloqueada. Entre em contato com o suporte.");
 
                 bool isValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
                 if(!isValid) return new(null, 400, "Dados incorretos");
 
                 ResponseApi<Company?> company = await companyRepository.GetByIdAsync(user.Company);
-
                 ResponseApi<Store?> store = await storeRepository.GetByIdAsync(user.Store);
-
                 ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(user.Plan);
+
+                // FIX 2: checar plan.Data antes de usar
+                if (plan.Data is null) return new(null, 400, "Plano não encontrado. Entre em contato com o suporte.");
 
                 AuthResponse response = new ()
                 {
-                    Token = GenerateJwtToken(user, plan.Data!.ExpirationDate, plan.Data.Type), 
+                    Token = GenerateJwtToken(user, plan.Data.ExpirationDate, plan.Data.Type), 
                     RefreshToken = GenerateJwtToken(user, plan.Data.ExpirationDate, plan.Data.Type, true), 
                     Name = user.Name, 
                     Id = user.Id, 
@@ -54,9 +58,9 @@ namespace api_infor_cell.src.Services
                     LogoCompany = company.Data is not null ? company.Data.Photo : "",
                     NameCompany = company.Data is not null ? company.Data.TradeName : "",
                     NameStore = store.Data is not null ? store.Data.TradeName : "",
-                    TypePlan = plan.Data is not null ? plan.Data.Type : "",
-                    SubscriberPlan =  user!.SubscriberPlan,
-                    ExpirationDate = plan.Data!.ExpirationDate,
+                    TypePlan = plan.Data.Type,
+                    SubscriberPlan = user!.SubscriberPlan,
+                    ExpirationDate = plan.Data.ExpirationDate,
                     Master = user.Master
                 };
 
@@ -67,6 +71,7 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         public async Task<ResponseApi<dynamic>> RegisterAsync(RegisterDTO request)
         {
             try
@@ -105,7 +110,6 @@ namespace api_infor_cell.src.Services
                 };
 
                 ResponseApi<User?> response = await repository.CreateAsync(user);
-                
                 if(response.Data is null) return new(null, 400, "Falha ao criar conta.");
 
                 DateTime date = DateTime.UtcNow;
@@ -150,8 +154,6 @@ namespace api_infor_cell.src.Services
                 response.Data.Store = responseStore.Data.Id;
                 
                 await repository.UpdateAsync(response.Data);
-
-                                
                 await mailHandler.SendMailAsync(request.Email, "Código de Confirmação", MailTemplate.ConfirmAccount(request.Name, access.CodeAccess));
 
                 return new(null, 201, "Conta criada com sucesso, foi enviado o e-mail de confirmação.");
@@ -161,6 +163,7 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         public async Task<ResponseApi<dynamic>> ConfirmAccountAsync(ConfirmAccountDTO request)
         {
             try
@@ -186,7 +189,9 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
-        public async Task<ResponseApi<dynamic>> NewCodeConfirmAsync(RegisterDTO request)
+
+        // FIX 4: usar NewCodeConfirmDTO — Name vinha null com RegisterDTO quebrando o template de e-mail
+        public async Task<ResponseApi<dynamic>> NewCodeConfirmAsync(NewCodeConfirmDTO request)
         {
             try
             {
@@ -202,8 +207,9 @@ namespace api_infor_cell.src.Services
 
                 ResponseApi<User?> response = await repository.UpdateAsync(user.Data);
                 if(response.Data is null) return new(null, 400, "Falha ao solicitar novo código.");
-                                
-                await mailHandler.SendMailAsync(request.Email, "Novo Código de Verificação", MailTemplate.NewCodeConfirmAccount(request.Name, access.CodeAccess));
+
+                // FIX 4: usar user.Data.Name (do banco) em vez de request.Name (que era null)
+                await mailHandler.SendMailAsync(request.Email, "Novo Código de Verificação", MailTemplate.NewCodeConfirmAccount(user.Data.Name, access.CodeAccess));
 
                 return new(null, 200, "Novo código foi enviado.");
             }
@@ -212,6 +218,7 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         public async Task<ResponseApi<AuthResponse>> RefreshTokenAsync(string token, string planId)
         {
             try
@@ -239,18 +246,16 @@ namespace api_infor_cell.src.Services
                 if (tokenType != "refresh") return new(null, 401, "O token fornecido não é um refresh token.");
 
                 var userId = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub || c.Type == ClaimTypes.NameIdentifier)?.Value;
-
                 if (string.IsNullOrEmpty(userId)) return new(null, 401, "Usuário não encontrado no token.");
                 
                 var email = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email || c.Type == ClaimTypes.Email)?.Value;
-
                 if (string.IsNullOrEmpty(email)) return new(null, 401, "Usuário não encontrado no token.");
-                ResponseApi<User?> user = await GetUserToken(email);
 
+                ResponseApi<User?> user = await GetUserToken(email);
                 if (user.Data is null) return new(null, 401, "Usuário não encontrado.");
 
                 ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(planId);
-                if (plan.Data is null) return new(null, 401, "Usuário não encontrado.");
+                if (plan.Data is null) return new(null, 401, "Plano não encontrado.");
 
                 string accessToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type);
                 string refreshToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type, true);
@@ -266,20 +271,25 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         public async Task<ResponseApi<User>> ResetPasswordAsync(ResetPasswordDTO request)
         {
             try
             {
-                if (string.IsNullOrEmpty(request.Password)) return new(null, 400, "Senha é obrigatória");
+                if (string.IsNullOrEmpty(request.Password)) return new(null, 400, "Senha atual é obrigatória");
+                if (string.IsNullOrEmpty(request.NewPassword)) return new(null, 400, "Nova senha é obrigatória");
                 if (string.IsNullOrEmpty(request.Id)) return new(null, 400, "Falha ao alterar senha");
-                
-                if(Validator.IsReliable(request.Password).Equals("Ruim")) return new(null, 400, $"Senha é muito fraca");
+
+                // FIX 6: validar confirmação da nova senha no backend
+                if (request.NewPassword != request.ConfirmPassword) return new(null, 400, "Nova senha e confirmação não coincidem");
+
+                if(Validator.IsReliable(request.NewPassword).Equals("Ruim")) return new(null, 400, $"Nova senha é muito fraca");
 
                 ResponseApi<User?> user = await repository.GetByIdAsync(request.Id);
                 if(!user.IsSuccess || user.Data is null) return new(null, 400, "Falha ao alterar senha");
                 
                 bool isValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Data.Password);
-                if(!isValid) return new(null, 400, "Senha antiga incorreta");
+                if(!isValid) return new(null, 400, "Senha atual incorreta");
 
                 user.Data.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
                 ResponseApi<User?> response = await repository.UpdateAsync(user.Data);
@@ -292,12 +302,12 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         public async Task<ResponseApi<User>> RequestForgotPasswordAsync(ForgotPasswordDTO request)
         {
             try
             {
                 ResponseApi<User?> responseUser = await repository.GetByEmailAsync(request.Email);
-
                 if(responseUser.Data is null) return new(null, 400, "Dados incorretos");
 
                 dynamic access = Util.GenerateCodeAccess();
@@ -307,14 +317,10 @@ namespace api_infor_cell.src.Services
                 responseUser.Data.ValidatedAccess = false;
 
                 string template = MailTemplate.ForgotPasswordWeb(responseUser.Data.Name, responseUser.Data.CodeAccess);
-
                 await mailHandler.SendMailAsync(request.Email, "Redefinição de Senha", template);
 
-                if(responseUser.Data is not null) 
-                {
-                    ResponseApi<User?> response = await repository.UpdateAsync(responseUser.Data);
-                    if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
-                };
+                ResponseApi<User?> response = await repository.UpdateAsync(responseUser.Data);
+                if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
 
                 return new(null, 200, "Foi enviado um e-mail para redefinir sua senha");
             }
@@ -323,6 +329,7 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         public async Task<ResponseApi<User>> ResetPassordForgotAsync(ResetPasswordDTO request)
         {
             try
@@ -332,7 +339,6 @@ namespace api_infor_cell.src.Services
                 if (request.Password != request.NewPassword) return new(null, 400, "As senhas não podem ser diferentes");
 
                 ResponseApi<User?> responseUser = await repository.GetByCodeAccessAsync(request.CodeAccess);
-
                 if(responseUser.Data is null) return new(null, 400, "Falha ao alterar senha");
 
                 if(responseUser.Data.CodeAccessExpiration < DateTime.UtcNow) return new(null, 400, "Código expirou, solicite um novo e-mail.");
@@ -354,6 +360,7 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
+
         private static string GenerateJwtToken(User user, DateTime expirationDate, string typePlan, bool refresh = false)
         {
             string? SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY") ?? "";
@@ -394,6 +401,7 @@ namespace api_infor_cell.src.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
+
         private async Task<ResponseApi<User?>> GetUserToken (string email)
         {
             ResponseApi<User?> responseUser = await repository.GetByEmailAsync(email);

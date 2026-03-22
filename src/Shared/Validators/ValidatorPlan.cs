@@ -15,7 +15,8 @@ public class ValidatorPlan(AppDbContext context)
         
         if(!VerifyQuantityStores(planType, quantityStores + 1)) return new(null, 400, $"Seu plano não permite ter {quantityStores + 1} Lojas.");
         
-        long quantityUsers = await context.Users.Find(x => !x.Deleted && x.Plan == planId).CountDocumentsAsync();
+        // FIX 7: excluir o admin titular da contagem de colaboradores para nao bloquear antes do limite real
+        long quantityUsers = await context.Users.Find(x => !x.Deleted && x.Plan == planId && !x.Admin).CountDocumentsAsync();
 
         if(!VerifyQuantityUsers(planType, quantityUsers + 1)) return new(null, 400, $"Seu plano não permite ter {quantityUsers + 1} Usuários.");
         

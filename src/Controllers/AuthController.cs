@@ -44,7 +44,7 @@ namespace api_infor_cell.src.Controllers
         
         [HttpPost]
         [Route("new-code-confirm")]
-        public async Task<IActionResult> NewCodeConfirmAsync([FromBody] RegisterDTO body)
+        public async Task<IActionResult> NewCodeConfirmAsync([FromBody] NewCodeConfirmDTO body)
         {
             if (body == null) return BadRequest("Dados inválidos");
 

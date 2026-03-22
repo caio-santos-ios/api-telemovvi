@@ -7,7 +7,7 @@ using AutoMapper;
 
 namespace api_infor_cell.src.Services
 {
-    public class SalesOrderService(ISalesOrderRepository repository, ISalesOrderItemRepository salesOrderItemRepository, IStockRepository stockRepository, IProductRepository productRepository, IExchangeService exchangeService, IBoxRepository boxRepository, IMapper _mapper) : ISalesOrderService
+    public class SalesOrderService(ISalesOrderRepository repository, ISalesOrderItemRepository salesOrderItemRepository, IStockRepository stockRepository, IProductRepository productRepository, IExchangeService exchangeService, IBoxRepository boxRepository, IAccountReceivableService accountReceivableService, IMapper _mapper) : ISalesOrderService
     {
         #region READ
         public async Task<PaginationApi<List<dynamic>>> GetAllAsync(GetAllDTO request)
@@ -243,6 +243,32 @@ namespace api_infor_cell.src.Services
 
                     await boxRepository.UpdateAsync(box.Data);
                 };
+
+                // FIX 5: gerar Conta a Receber ao finalizar pedido de venda
+                int totalInstallments = (int)(request.NumberOfInstallments > 0 ? request.NumberOfInstallments : 1);
+                decimal installmentValue = Math.Round(salesOrderResponse.Data.Total / totalInstallments, 2);
+
+                for (int i = 1; i <= totalInstallments; i++)
+                {
+                    await accountReceivableService.CreateAsync(new CreateAccountReceivableDTO
+                    {
+                        Plan = salesOrderResponse.Data.Plan,
+                        Company = salesOrderResponse.Data.Company,
+                        Store = salesOrderResponse.Data.Store,
+                        CreatedBy = request.UpdatedBy,
+                        Description = $"Pedido de Venda #{salesOrderResponse.Data.Code}",
+                        OriginId = salesOrderResponse.Data.Id,
+                        OriginType = "sales_order",
+                        CustomerId = salesOrderResponse.Data.CustomerId,
+                        PaymentMethodId = request.PaymentMethodId,
+                        Amount = installmentValue,
+                        InstallmentNumber = i,
+                        TotalInstallments = totalInstallments,
+                        DueDate = DateTime.UtcNow.AddMonths(i - 1),
+                        IssueDate = DateTime.UtcNow,
+                        IsPaymented = totalInstallments == 1
+                    });
+                }
 
                 return new(response.Data, 200, "Pedido de Venda Finalizado com sucesso");
             }
