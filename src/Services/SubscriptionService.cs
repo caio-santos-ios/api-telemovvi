@@ -15,31 +15,29 @@ namespace api_infor_cell.src.Services
         AsaasHandler asaasHandler
     ) : ISubscriptionService
     {
-        // Mapeamento de tipo de plano para preço e duração (meses)
         private static readonly Dictionary<string, decimal> PlanPrices = new(StringComparer.OrdinalIgnoreCase)
         {
-            { "Bronze",  5m },
-            { "Prata",   5m },
-            { "Ouro",    5m },
-            { "Platina", 5m }
+            { "Bronze",  119m },
+            { "Prata",   199m },
+            { "Ouro",    289m },
+            { "Platina", 379m }
         };
-
         public async Task<ResponseApi<Subscription?>> CreateSubscriptionAsync(CreateSubscriptionDTO request, string userId)
         {
             try
             {
-                // Validações básicas
-                if (string.IsNullOrWhiteSpace(request.PlanType))
-                    return new(null, 400, "Tipo de plano é obrigatório");
+                if (string.IsNullOrWhiteSpace(request.PlanType)) return new(null, 400, "Tipo de plano é obrigatório");
 
-                if (!PlanPrices.TryGetValue(request.PlanType, out decimal value))
-                    return new(null, 400, $"Plano '{request.PlanType}' inválido. Opções: Bronze, Prata, Ouro, Platina");
+                if (!PlanPrices.TryGetValue(request.PlanType, out decimal value)) return new(null, 400, $"Plano '{request.PlanType}' inválido. Opções: Bronze, Prata, Ouro, Platina");
 
                 string billingType = request.BillingType.ToUpper();
-                if (!new[] { "PIX", "BOLETO", "CREDIT_CARD", "DEBIT_CARD" }.Contains(billingType)) return new(null, 400, "Forma de pagamento inválida. Opções: PIX, BOLETO, CREDIT_CARD, DEBIT_CARD");
+                
+                if (!new List<string> { "PIX", "BOLETO", "CREDIT_CARD", "DEBIT_CARD" }.Contains(billingType)) return new(null, 400, "Forma de pagamento inválida. Opções: PIX, BOLETO e CARTÃO DE CRÉDITO");
 
                 ResponseApi<Company?> companyResp = await companyRepository.GetByIdAsync(request.Company);
+
                 if (companyResp.Data is null) return new(null, 404, "Usuário não encontrado");
+                
                 Company company = companyResp.Data;
 
                 AsaasCustomerResponse? customer = await asaasHandler.GetOrCreateCustomerAsync(
@@ -49,10 +47,8 @@ namespace api_infor_cell.src.Services
                     phone: company.Phone
                 );
 
-                if (customer is null)
-                    return new(null, 500, "Erro ao criar cliente no Asaas");
+                if (customer is null) return new(null, 500, "Erro ao criar cliente no Asaas");
 
-                // Montar dados do cartão (se aplicável)
                 string zipCode = "";
                 string number = "";
                 
@@ -79,15 +75,14 @@ namespace api_infor_cell.src.Services
                         Cvv = request.CardCvv ?? string.Empty,
                         HolderEmail = company.Email,
                         HolderCpfCnpj = company.Document,
-                        HolderPostalCode = zipCode,    // TODO: buscar CEP do usuário/empresa
-                        HolderAddressNumber = number, // TODO: buscar número do endereço
+                        HolderPostalCode = zipCode,    
+                        HolderAddressNumber = number,
                         HolderPhone = company.Phone
                     };
                 }
 
-                // Data de vencimento: hoje + 3 dias
                 string nextDueDate = DateTime.UtcNow.AddDays(3).ToString("yyyy-MM-dd");
-                // Criar assinatura no Asaas
+
                 AsaasSubscriptionResponse? asaasSubscription = await asaasHandler.CreateSubscriptionAsync(
                     customerId: customer.Id,
                     value: value,
@@ -102,7 +97,6 @@ namespace api_infor_cell.src.Services
                     return new(null, 400, errorMsg);
                 }
 
-                // Buscar detalhes do pagamento gerado (para PIX e Boleto)
                 string paymentUrl = "";
                 string identificationField = "";
                 string pixQrCode = "";
@@ -132,7 +126,6 @@ namespace api_infor_cell.src.Services
                     }
                 }
 
-                // Salvar assinatura no banco
                 Subscription subscription = new()
                 {
                     UserId = userId,
@@ -156,9 +149,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<Subscription?> result = await repository.CreateAsync(subscription);
                 return result;
             }
-            catch (Exception ex)
+            catch
             {
-                return new(null, 500, $"Erro inesperado: {ex.Message}");
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
         public async Task<ResponseApi<Subscription?>> GetCurrentSubscriptionAsync(string userId)

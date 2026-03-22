@@ -3,6 +3,7 @@ using api_infor_cell.src.Handlers;
 using api_infor_cell.src.Interfaces;
 using api_infor_cell.src.Repository;
 using api_infor_cell.src.Services;
+using api_infor_cell.src.Shared.Validators;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -170,6 +171,9 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddTransient<MailHandler>();
             builder.Services.AddTransient<CloudinaryHandler>();
             builder.Services.AddSingleton<AsaasHandler>();
+
+            // Validator
+            builder.Services.AddSingleton<ValidatorPlan>();
 
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
         }

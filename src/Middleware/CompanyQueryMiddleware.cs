@@ -1,8 +1,11 @@
 using System.Text;
 using System.Text.Json;
+using api_infor_cell.src.Models.Base;
+using api_infor_cell.src.Shared.Utils;
+using api_infor_cell.src.Shared.Validators;
 using Microsoft.Extensions.Primitives;
 
-public class CompanyQueryMiddleware(RequestDelegate _next)
+public class CompanyQueryMiddleware(RequestDelegate _next, ValidatorPlan validatorPlan)
 {
     public async Task InvokeAsync(HttpContext context)
     {
@@ -40,8 +43,36 @@ public class CompanyQueryMiddleware(RequestDelegate _next)
             string? plan = context.User.FindFirst("plan")?.Value;
             string? company = context.User.FindFirst("company")?.Value;
             string? store = context.User.FindFirst("store")?.Value;
+            string? typePlan = context.User.FindFirst("typePlan")?.Value;
             string? userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-            
+
+            if(path.Contains("companies") || path.Contains("stores") || path.Contains("users")) 
+            {
+                if(method == HttpMethods.Post) 
+                {
+                    ResponseApi<dynamic> validator = await validatorPlan.ValidatorConfigurationPlan(plan!, typePlan!);
+                    if(!validator.IsSuccess)
+                    {
+                        context.Response.StatusCode = StatusCodes.Status400BadRequest;
+                        context.Response.ContentType = "application/json";
+
+                        var errorResponse = new 
+                        {
+                            result = new {
+                                data = new {
+                                    status = "expired"
+                                },
+                                message = validator.Message
+                            },
+                        };
+
+                        var json = System.Text.Json.JsonSerializer.Serialize(errorResponse);
+                        await context.Response.WriteAsync(json);
+                        return;
+                    }
+                }
+            }
+
             if(path.Split("/")[2] != "companies") 
             {
                 if(method == HttpMethods.Put)

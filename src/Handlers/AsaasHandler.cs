@@ -12,7 +12,7 @@ namespace api_infor_cell.src.Handlers
     /// </summary>
     public class AsaasHandler()
     {
-        private readonly string _apiKey = Environment.GetEnvironmentVariable("ASAAS_API_KEY") ?? "";
+        private readonly string _apiKey = Environment.GetEnvironmentVariable("KEY") ?? "";
         private readonly string _baseUrl = Environment.GetEnvironmentVariable("URI_ASAAS") ?? "";
 
         private HttpClient CreateClient()

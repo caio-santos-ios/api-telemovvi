@@ -42,8 +42,8 @@ namespace api_infor_cell.src.Services
 
                 AuthResponse response = new ()
                 {
-                    Token = GenerateJwtToken(user, plan.Data!.ExpirationDate), 
-                    RefreshToken = GenerateJwtToken(user, plan.Data.ExpirationDate, true), 
+                    Token = GenerateJwtToken(user, plan.Data!.ExpirationDate, plan.Data.Type), 
+                    RefreshToken = GenerateJwtToken(user, plan.Data.ExpirationDate, plan.Data.Type, true), 
                     Name = user.Name, 
                     Id = user.Id, 
                     Admin = user.Admin, 
@@ -169,7 +169,6 @@ namespace api_infor_cell.src.Services
                 
                 ResponseApi<User?> user = await repository.GetByCodeAccessAsync(request.Code);
                 if(user.Data is null) return new(null, 400, "Código inválido.");
-                // if(!user.Data.ValidatedAccess) return new(null, 400, "Código inválido.");
 
                 if(user.Data.CodeAccessExpiration < DateTime.UtcNow) return new(null, 400, "Código expirou, solicite um novo código.");
 
@@ -253,9 +252,8 @@ namespace api_infor_cell.src.Services
                 ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(planId);
                 if (plan.Data is null) return new(null, 401, "Usuário não encontrado.");
 
-
-                string accessToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate);
-                string refreshToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, true);
+                string accessToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type);
+                string refreshToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type, true);
 
                 return new(new AuthResponse
                 {
@@ -299,61 +297,8 @@ namespace api_infor_cell.src.Services
             try
             {
                 ResponseApi<User?> responseUser = await repository.GetByEmailAsync(request.Email);
-                // ResponseApi<Employee?> responseEmployee = await employeeRepository.GetByEmailAsync(request.Email, "");
-                
-                // User user = new();
 
-                // if(responseUser.Data is not null) {
-                //     user = new()
-                //     {
-                //         Password = responseUser.Data.Password,
-                //         Company = responseUser.Data.Company,
-                //         Store = responseUser.Data.Store,
-                //         Photo = responseUser.Data.Photo,
-                //         Id = responseUser.Data.Id,
-                //         Name = responseUser.Data.Name,
-                //         Modules = responseUser.Data.Modules,
-                //         Plan = responseUser.Data.Plan,
-                //         Email = responseUser.Data.Email
-                //     };
-                // } else {
-
-                    if(responseUser.Data is null) 
-                    {
-                        return new(null, 400, "Dados incorretos");
-                    };
-
-                //     user = new()
-                //     {
-                //         Password = responseEmployee.Data.Password,
-                //         Company = responseEmployee.Data.Company,
-                //         Store = responseEmployee.Data.Store,
-                //         Photo = responseEmployee.Data.Photo,
-                //         Id = responseEmployee.Data.Id,
-                //         Name = responseEmployee.Data.Name,
-                //         Modules = responseEmployee.Data.Modules,
-                //         Plan = responseEmployee.Data.Plan,
-                //         Active = responseEmployee.Data.Active,
-                //         Admin = responseEmployee.Data.Admin,
-                //         Blocked = responseEmployee.Data.Blocked,
-                //         CodeAccess = responseEmployee.Data.CodeAccess,
-                //         CodeAccessExpiration = responseEmployee.Data.CodeAccessExpiration,
-                //         Companies = responseEmployee.Data.Companies,
-                //         CreatedAt = responseEmployee.Data.CreatedAt,
-                //         CreatedBy = responseEmployee.Data.CreatedBy,
-                //         Deleted = responseEmployee.Data.Deleted,
-                //         DeletedAt = responseEmployee.Data.DeletedAt,
-                //         Phone = responseEmployee.Data.Phone,
-                //         Email = responseEmployee.Data.Email,
-                //         // Role = responseEmployee.Data.Role,
-                //         Stores = responseEmployee.Data.Stores,
-                //         UpdatedAt = responseEmployee.Data.UpdatedAt,
-                //         UpdatedBy = responseEmployee.Data.UpdatedBy,
-                //         UserName = responseEmployee.Data.UserName,
-                //         ValidatedAccess = responseEmployee.Data.ValidatedAccess,
-                //         Whatsapp = responseEmployee.Data.Whatsapp
-                //     };
-                // };
+                if(responseUser.Data is null) return new(null, 400, "Dados incorretos");
 
                 dynamic access = Util.GenerateCodeAccess();
 
@@ -370,17 +315,6 @@ namespace api_infor_cell.src.Services
                     ResponseApi<User?> response = await repository.UpdateAsync(responseUser.Data);
                     if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
                 };
-                // else 
-                // {
-                //     if(responseEmployee.Data is null) return new(null, 400, "Falha ao redefinir senha");
-                    
-                //     responseEmployee.Data.CodeAccess = access.CodeAccess;
-                //     responseEmployee.Data.CodeAccessExpiration = access.CodeAccessExpiration;
-                //     responseEmployee.Data.ValidatedAccess = false;
-                
-                //     ResponseApi<Employee?> response = await employeeRepository.UpdateAsync(responseEmployee.Data);
-                //     if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
-                // }
 
                 return new(null, 200, "Foi enviado um e-mail para redefinir sua senha");
             }
@@ -398,18 +332,6 @@ namespace api_infor_cell.src.Services
                 if (request.Password != request.NewPassword) return new(null, 400, "As senhas não podem ser diferentes");
 
                 ResponseApi<User?> responseUser = await repository.GetByCodeAccessAsync(request.CodeAccess);
-                // ResponseApi<Employee?> responseEmployee = await employeeRepository.GetByCodeAccessAsync(request.CodeAccess);
-
-                // User user = new();
-                // if(responseUser.Data is not null) 
-                // {
-                //     user.CodeAccessExpiration = responseUser.Data.CodeAccessExpiration;
-                // }
-                // else 
-                // {
-                //     if(responseEmployee.Data is null) return new(null, 400, "Falha ao redefinir senha");
-                //     user.CodeAccessExpiration = responseEmployee.Data.CodeAccessExpiration;                   
-                // }
 
                 if(responseUser.Data is null) return new(null, 400, "Falha ao alterar senha");
 
@@ -424,22 +346,7 @@ namespace api_infor_cell.src.Services
 
                 ResponseApi<User?> response = await repository.UpdateAsync(responseUser.Data);
                 if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
-                // if(responseUser.Data is not null) 
-                // {
-                // }
-                // else 
-                // {
-                //     if(responseEmployee.Data is null) return new(null, 400, "Falha ao redefinir senha");
-
-                //     responseEmployee.Data.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);                    
-                //     responseEmployee.Data.CodeAccess = "";
-                //     responseEmployee.Data.CodeAccessExpiration = null;
-                //     responseEmployee.Data.ValidatedAccess = true;
                 
-                //     ResponseApi<Employee?> response = await employeeRepository.UpdateAsync(responseEmployee.Data);
-                //     if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
-                // };
-
                 return new(null, 200, "Senha alterada com sucesso");
             }
             catch
@@ -447,7 +354,7 @@ namespace api_infor_cell.src.Services
                 return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
             }
         }
-        private static string GenerateJwtToken(User user, DateTime expirationDate, bool refresh = false)
+        private static string GenerateJwtToken(User user, DateTime expirationDate, string typePlan, bool refresh = false)
         {
             string? SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY") ?? "";
             string? Issuer = Environment.GetEnvironmentVariable("ISSUER") ?? "";
@@ -467,6 +374,7 @@ namespace api_infor_cell.src.Services
                 new Claim("plan", user.Plan),
                 new Claim("store", user.Store),
                 new Claim("company", user.Company),
+                new Claim("typePlan", typePlan),
                 new Claim("planExpirationDate", expirationDate.ToString("yyyy-MM-ddTHH:mm:ssZ")),
                 new Claim(JwtRegisteredClaimNames.Nickname, user.UserName),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
