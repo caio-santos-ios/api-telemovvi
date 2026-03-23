@@ -43,12 +43,20 @@ namespace api_infor_cell.src.Controllers
         }
 
         [AllowAnonymous]
+        [HttpGet("public/categories/{plan}/{company}/{store}")]
+        public async Task<IActionResult> GetPublicCategories(string plan, string company, string store)
+        {
+            var response = await service.GetPublicCategoriesAsync(plan, company, store);
+            return StatusCode(response.StatusCode, new { response.Result });
+        }
+
+        [AllowAnonymous]
         [HttpGet("public/products/{plan}/{company}/{store}")]
         public async Task<IActionResult> GetPublicProducts(
             string plan, string company, string store,
-            [FromQuery] string? search, [FromQuery] string? categoryId)
+            [FromQuery] string? search, [FromQuery] string? categoryId, [FromQuery] string? subcategory)
         {
-            var response = await service.GetPublicProductsAsync(plan, company, store, search, categoryId);
+            var response = await service.GetPublicProductsAsync(plan, company, store, search, categoryId, subcategory);
             return StatusCode(response.StatusCode, new { response.Result });
         }
 

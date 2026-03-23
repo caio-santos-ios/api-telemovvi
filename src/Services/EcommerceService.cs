@@ -10,9 +10,9 @@ namespace api_infor_cell.src.Services
 {
     public class EcommerceService(
         AppDbContext context,
-        AsaasHandler asaasHandler
-        // IStockRepository stockRepository,
-        // IProductRepository productRepository
+        AsaasHandler asaasHandler,
+        IStockRepository stockRepository,
+        IProductRepository productRepository
     ) : IEcommerceService
     {
         // ─── CONFIG ──────────────────────────────────────────────────────────────
@@ -82,7 +82,7 @@ namespace api_infor_cell.src.Services
 
         // ─── PRODUTOS PÚBLICOS ────────────────────────────────────────────────────
 
-        public async Task<ResponseApi<List<dynamic>>> GetPublicProductsAsync(string plan, string company, string store, string? search, string? categoryId)
+        public async Task<ResponseApi<List<dynamic>>> GetPublicProductsAsync(string plan, string company, string store, string? search, string? categoryId, string? subcategory = null)
         {
             try
             {
@@ -112,6 +112,10 @@ namespace api_infor_cell.src.Services
                     productFilter = Builders<Product>.Filter.And(productFilter,
                         Builders<Product>.Filter.Eq(x => x.CategoryId, categoryId));
 
+                if (!string.IsNullOrEmpty(subcategory))
+                    productFilter = Builders<Product>.Filter.And(productFilter,
+                        Builders<Product>.Filter.Eq(x => x.Subcategory, subcategory));
+
                 var products = await context.Products.Find(productFilter).ToListAsync();
 
                 var result = products.Select(p =>
@@ -128,6 +132,7 @@ namespace api_infor_cell.src.Services
                         p.DescriptionComplet,
                         p.Code,
                         p.CategoryId,
+                        p.Subcategory,
                         p.BrandId,
                         p.HasVariations,
                         Price = minPrice,
@@ -148,6 +153,67 @@ namespace api_infor_cell.src.Services
                 return new(result);
             }
             catch { return new(null, 500, "Erro ao buscar produtos."); }
+        }
+
+        // ─── CATEGORIAS PÚBLICAS ─────────────────────────────────────────────────
+
+        public async Task<ResponseApi<List<dynamic>>> GetPublicCategoriesAsync(string plan, string company, string store)
+        {
+            try
+            {
+                // buscar apenas categoryIds que têm produtos em estoque disponíveis
+                var stockFilter = Builders<Stock>.Filter.And(
+                    Builders<Stock>.Filter.Eq(x => x.Deleted, false),
+                    Builders<Stock>.Filter.Eq(x => x.Plan, plan),
+                    Builders<Stock>.Filter.Eq(x => x.Company, company),
+                    Builders<Stock>.Filter.Eq(x => x.Store, store),
+                    Builders<Stock>.Filter.Eq(x => x.ForSale, "yes"),
+                    Builders<Stock>.Filter.Gt(x => x.QuantityAvailable, 0m)
+                );
+
+                var stocks = await context.Stocks.Find(stockFilter).ToListAsync();
+                var productIds = stocks.Select(s => s.ProductId).Distinct().ToList();
+
+                var products = await context.Products
+                    .Find(x => !x.Deleted && productIds.Contains(x.Id))
+                    .ToListAsync();
+
+                var usedCategoryIds = products
+                    .Where(p => !string.IsNullOrEmpty(p.CategoryId))
+                    .Select(p => p.CategoryId)
+                    .Distinct()
+                    .ToList();
+
+                var categories = await context.Categories
+                    .Find(x => !x.Deleted && x.Plan == plan && x.Company == company && usedCategoryIds.Contains(x.Id))
+                    .ToListAsync();
+
+                var result = categories.Select(c =>
+                {
+                    // subcategorias que realmente têm produtos
+                    var usedSubcategories = products
+                        .Where(p => p.CategoryId == c.Id && !string.IsNullOrEmpty(p.Subcategory))
+                        .Select(p => p.Subcategory)
+                        .Distinct()
+                        .ToList();
+
+                    var filteredSubs = c.Subcategories
+                        .Where(s => usedSubcategories.Contains(s.Name))
+                        .Select(s => new { s.Code, s.Name })
+                        .ToList();
+
+                    return (dynamic)new
+                    {
+                        c.Id,
+                        c.Name,
+                        c.Code,
+                        Subcategories = filteredSubs
+                    };
+                }).ToList();
+
+                return new(result);
+            }
+            catch { return new(null, 500, "Erro ao buscar categorias."); }
         }
 
         // ─── CLIENTES DA LOJA ─────────────────────────────────────────────────────

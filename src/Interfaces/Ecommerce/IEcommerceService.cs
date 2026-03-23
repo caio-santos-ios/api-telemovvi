@@ -11,7 +11,8 @@ namespace api_infor_cell.src.Interfaces
         Task<ResponseApi<EcommerceConfig?>> SaveConfigAsync(SaveEcommerceConfigDTO request);
 
         // Produtos públicos
-        Task<ResponseApi<List<dynamic>>> GetPublicProductsAsync(string plan, string company, string store, string? search, string? categoryId);
+        Task<ResponseApi<List<dynamic>>> GetPublicCategoriesAsync(string plan, string company, string store);
+        Task<ResponseApi<List<dynamic>>> GetPublicProductsAsync(string plan, string company, string store, string? search, string? categoryId, string? subcategory = null);
 
         // Clientes da loja
         Task<ResponseApi<dynamic>> RegisterCustomerAsync(EcommerceRegisterDTO request);
