@@ -10,9 +10,9 @@ namespace api_infor_cell.src.Services
 {
     public class EcommerceService(
         AppDbContext context,
-        AsaasHandler asaasHandler,
-        IStockRepository stockRepository,
-        IProductRepository productRepository
+        AsaasHandler asaasHandler
+        // IStockRepository stockRepository,
+        // IProductRepository productRepository
     ) : IEcommerceService
     {
         // ─── CONFIG ──────────────────────────────────────────────────────────────

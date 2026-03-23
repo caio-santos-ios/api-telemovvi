@@ -13,10 +13,11 @@ using api_infor_cell.src.Shared.Validators;
 using api_infor_cell.src.Shared.Utils;
 using System.Text.Json;
 using MongoDB.Driver.Linq;
+using api_infor_cell.src.Repository;
 
 namespace api_infor_cell.src.Services
 {
-    public class AuthService(IUserRepository repository, IEmployeeRepository employeeRepository, IPlanRepository planRepository, ICompanyRepository companyRepository, IStoreRepository storeRepository, MailHandler mailHandler) : IAuthService
+    public class AuthService(IUserRepository repository, IEmployeeRepository employeeRepository, IPlanRepository planRepository, ICompanyRepository companyRepository, IStoreRepository storeRepository, MailHandler mailHandler, IUserRepository userRepository) : IAuthService
     {
         public async Task<ResponseApi<AuthResponse>> LoginAsync(LoginDTO request)
         {
@@ -30,8 +31,17 @@ namespace api_infor_cell.src.Services
                 
                 User user = res.Data;
 
-                // FIX 1: verificar conta confirmada e bloqueio
-                if (!user.ValidatedAccess) return new(null, 400, "Conta não confirmada. Verifique seu e-mail.");
+                if (!user.ValidatedAccess) {
+                    dynamic access = Util.GenerateCodeAccess();
+                    
+                    res.Data.CodeAccess = access.CodeAccess;
+                    res.Data.CodeAccessExpiration = access.CodeAccessExpiration;
+
+                    await userRepository.UpdateAsync(res.Data);
+
+                    await mailHandler.SendMailAsync(request.Email, "Confirmar Conta", MailTemplate.NewLinkCodeConfirmAccount(res.Data.Name, access.CodeAccess));
+                    return new(null, 400, "Conta não confirmada. Verifique seu e-mail.");
+                } 
                 if (user.Blocked) return new(null, 400, "Conta bloqueada. Entre em contato com o suporte.");
 
                 bool isValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
@@ -41,7 +51,6 @@ namespace api_infor_cell.src.Services
                 ResponseApi<Store?> store = await storeRepository.GetByIdAsync(user.Store);
                 ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(user.Plan);
 
-                // FIX 2: checar plan.Data antes de usar
                 if (plan.Data is null) return new(null, 400, "Plano não encontrado. Entre em contato com o suporte.");
 
                 AuthResponse response = new ()
