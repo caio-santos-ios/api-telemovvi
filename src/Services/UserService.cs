@@ -73,7 +73,7 @@ namespace api_infor_cell.src.Services
                 
                 string messageCode = $"Seu código de verificação é: {access.CodeAccess}";
                 
-                await smsHandler.SendMessageAsync(request.Phone, messageCode);
+                // await smsHandler.SendMessageAsync(request.Phone, messageCode);
                 
                 return new(null, 201, "Conta criada com sucesso, foi enviado o código de verificação para seu celular e e-mail.");
             }
