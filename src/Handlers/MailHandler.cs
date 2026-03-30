@@ -1,30 +1,39 @@
-using MailKit.Net.Smtp;
-using MimeKit;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Text.Json;
 
 namespace api_infor_cell.src.Handlers
 {
     public class MailHandler
     {
         private readonly string EmailFrom = Environment.GetEnvironmentVariable("EMAIL_FROM") ?? "";
-        private readonly string Password = Environment.GetEnvironmentVariable("PASSWORD_EMAIL") ?? "";
+        private readonly string ResendApiKey = Environment.GetEnvironmentVariable("RESEND_API_KEY") ?? "";
 
         public async Task SendMailAsync(string recipient, string subject, string body)
         {
-            MimeMessage mensagem = new();
-            mensagem.From.Add(MailboxAddress.Parse(EmailFrom));
-            mensagem.To.Add(MailboxAddress.Parse(recipient));
-            mensagem.Subject = subject;
+            using HttpClient httpClient = new();
+            httpClient.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", ResendApiKey);
 
-            mensagem.Body = new TextPart("html")
+            var payload = new
             {
-                Text = body
+                from = EmailFrom,
+                to = new[] { recipient },
+                subject = subject,
+                html = body
             };
 
-            using SmtpClient smtp = new();
-            await smtp.ConnectAsync("smtp.gmail.com", 587, MailKit.Security.SecureSocketOptions.StartTls);
-            await smtp.AuthenticateAsync(EmailFrom, Password);
-            await smtp.SendAsync(mensagem);
-            await smtp.DisconnectAsync(true);
+            var content = new StringContent(
+                JsonSerializer.Serialize(payload),
+                Encoding.UTF8,
+                "application/json"
+            );
+
+            var response = await httpClient.PostAsync("https://api.resend.com/emails", content);
+            var responseBody = await response.Content.ReadAsStringAsync();
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception($"Resend error: {responseBody}");
         } 
     }
 }

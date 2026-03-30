@@ -4,6 +4,7 @@ using api_infor_cell.src.Interfaces;
 using api_infor_cell.src.Repository;
 using api_infor_cell.src.Services;
 using api_infor_cell.src.Shared.Validators;
+using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 
@@ -179,6 +180,13 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddSingleton<ValidatorPlan>();
 
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
+
+            Account account = new(
+                Environment.GetEnvironmentVariable("CLOUDINARY_CLOUD_NAME"),
+                Environment.GetEnvironmentVariable("CLOUDINARY_API_KEY"),
+                Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
+            );
+            builder.Services.AddSingleton(new Cloudinary(account));
         }
     }
 }
