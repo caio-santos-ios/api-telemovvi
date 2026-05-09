@@ -3,6 +3,7 @@ using api_infor_cell.src.Handlers;
 using api_infor_cell.src.Interfaces;
 using api_infor_cell.src.Repository;
 using api_infor_cell.src.Services;
+using api_infor_cell.src.Shared.Templates;
 using api_infor_cell.src.Shared.Validators;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -62,6 +63,7 @@ namespace api_infor_cell.src.Configuration
         }
         public static void AddBuilderServices(this WebApplicationBuilder builder)
         {
+            // AUTH
             builder.Services.AddTransient<IAuthService, AuthService>();                  
             
             // MASTER DATA
@@ -114,30 +116,21 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddTransient<ICustomerRepository, CustomerRepository>();
             builder.Services.AddTransient<IExchangeService, ExchangeService>();
             builder.Services.AddTransient<IExchangeRepository, ExchangeRepository>();
-
             builder.Services.AddTransient<IPurchaseOrderService, PurchaseOrderService>();
             builder.Services.AddTransient<IPurchaseOrderRepository, PurchaseOrderRepository>();
-
             builder.Services.AddTransient<IPurchaseOrderItemService, PurchaseOrderItemService>();
             builder.Services.AddTransient<IPurchaseOrderItemRepository, PurchaseOrderItemRepository>();
-
             builder.Services.AddTransient<ITransferService, TransferService>();
             builder.Services.AddTransient<ITransferRepository, TransferRepository>();
-
             builder.Services.AddTransient<IVariationService, VariationService>();
             builder.Services.AddTransient<IVariationRepository, VariationRepository>();
-
             builder.Services.AddTransient<IProfilePermissionService, ProfilePermissionService>();
-            builder.Services.AddTransient<IProfilePermissionRepository, ProfilePermissionRepository>();
-            
+            builder.Services.AddTransient<IProfilePermissionRepository, ProfilePermissionRepository>();            
             builder.Services.AddTransient<IAdjustmentService, AdjustmentService>();
-            builder.Services.AddTransient<IAdjustmentRepository, AdjustmentRepository>();
-            
+            builder.Services.AddTransient<IAdjustmentRepository, AdjustmentRepository>();            
             builder.Services.AddTransient<ISituationService, SituationService>();
-            builder.Services.AddTransient<ISituationRepository, SituationRepository>();
-            
+            builder.Services.AddTransient<ISituationRepository, SituationRepository>();            
             builder.Services.AddTransient<ILogApiRepository, LogApiRepository>();
-
             builder.Services.AddTransient<IBudgetService, BudgetService>();
             builder.Services.AddTransient<IBudgetRepository, BudgetRepository>();
             builder.Services.AddTransient<IBudgetItemService, BudgetItemService>();
@@ -158,7 +151,7 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddTransient<IDashboardRepository, DashboardRepository>();
 
 
-            // Subscription
+            // SUBSCRIPTION
             builder.Services.AddScoped<ISubscriptionRepository, SubscriptionRepository>();
             builder.Services.AddScoped<ISubscriptionService, SubscriptionService>();
 
@@ -170,14 +163,17 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddTransient<IFiscalDocumentRepository, FiscalDocumentRepository>();
             builder.Services.AddTransient<ISefazProvider, SefazProvider>();
 
-            // Handlers
+            // HANDLERS
             builder.Services.AddTransient<SmsHandler>();
             builder.Services.AddTransient<MailHandler>();
             builder.Services.AddTransient<CloudinaryHandler>();
             builder.Services.AddSingleton<AsaasHandler>();
 
-            // Validator
+            // VALIDATOR
             builder.Services.AddSingleton<ValidatorPlan>();
+
+            // TEMPLATES
+            builder.Services.AddSingleton<MailTemplate>();
 
             builder.Services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 

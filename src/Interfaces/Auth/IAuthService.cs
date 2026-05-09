@@ -15,5 +15,6 @@ namespace api_infor_cell.src.Interfaces
         Task<ResponseApi<User>> ResetPasswordAsync(ResetPasswordDTO request);
         Task<ResponseApi<User>> RequestForgotPasswordAsync(ForgotPasswordDTO request);
         Task<ResponseApi<User>> ResetPassordForgotAsync(ResetPasswordDTO request);
+        Task<ResponseApi<AuthResponse>> SelectCompanyTokenAsync(SelectCompanyTokenDTO request);
     }
 }

@@ -9,7 +9,13 @@ using AutoMapper;
 
 namespace api_infor_cell.src.Services
 {
-    public class CompanyService(ICompanyRepository repository, IUserRepository userRepository, CloudinaryHandler cloudinaryHandler, IMapper _mapper) : ICompanyService
+    public class CompanyService(
+        ICompanyRepository repository, 
+        IStoreRepository storeRepository,
+        IUserRepository userRepository, 
+        CloudinaryHandler cloudinaryHandler, 
+        IMapper _mapper
+    ) : ICompanyService
     {
         #region READ
         public async Task<PaginationApi<List<dynamic>>> GetAllAsync(GetAllDTO request)
@@ -67,6 +73,34 @@ namespace api_infor_cell.src.Services
                 ResponseApi<Company?> response = await repository.CreateAsync(company);
 
                 if(response.Data is null) return new(null, 400, "Falha ao criar Empresa.");
+
+                ResponseApi<Store?> responseStore = await storeRepository.CreateAsync(new ()
+                {
+                    Plan = response.Data.Plan,
+                    Company = response.Data.Id,
+                    CorporateName = response.Data.CorporateName,
+                    TradeName = response.Data.TradeName,
+                    Document = response.Data.Document,
+                    Email = response.Data.Email,
+                    Phone = response.Data.Phone,
+                    Whatsapp = response.Data.Whatsapp,
+                    StateRegistration = response.Data.StateRegistration,
+                    MunicipalRegistration = response.Data.MunicipalRegistration,
+                    Website = response.Data.Website,
+                    Photo = response.Data.Photo,
+                    CreatedBy = request.CreatedBy
+                });
+
+                ResponseApi<User?> user = await userRepository.GetBySubscribedAsync(request.Plan);
+
+                if(user.Data is not null && responseStore.Data is not null)
+                {
+                    user.Data.Companies.Add(company.Id);
+                    user.Data.Stores.Add(responseStore.Data.Id);
+
+                    await userRepository.UpdateAsync(user.Data);
+                }
+
                 return new(response.Data, 201, "Empresa criada com sucesso.");
             }
             catch

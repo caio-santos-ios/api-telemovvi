@@ -98,5 +98,15 @@ namespace api_infor_cell.src.Controllers
             ResponseApi<User> response = await authService.ResetPassordForgotAsync(request);
             return StatusCode(response.StatusCode, new { response.Result });
         }
+        
+        [HttpPut]
+        [Route("select-company-token")]
+        public async Task<IActionResult> SelectCompanyTokenAsync([FromBody] SelectCompanyTokenDTO request)
+        {
+            if (request == null) return BadRequest("Dados inválidos");
+
+            ResponseApi<AuthResponse> response = await authService.SelectCompanyTokenAsync(request);
+            return StatusCode(response.StatusCode, new { response.Result });
+        }
     }
 }

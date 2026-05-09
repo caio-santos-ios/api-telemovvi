@@ -198,6 +198,11 @@ namespace api_infor_cell.src.Configuration
         public IMongoCollection<FiscalConfig> FiscalConfigs => Database.GetCollection<FiscalConfig>("fiscal_configs");
 
         #endregion
+
+        #region SETTING
+        public IMongoCollection<Template> Templates => Database.GetCollection<Template>("templates");
+
+        #endregion
     }
 }
 

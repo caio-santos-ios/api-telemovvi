@@ -21,5 +21,6 @@ namespace api_infor_cell.src.Responses
         public bool SubscriberPlan {get;set;} = false;
         public DateTime ExpirationDate {get;set;} = DateTime.UtcNow;
         public List<Module> Modules {get;set;} = [];
+        public List<Company> Companies {get;set;} = [];
     }
 }

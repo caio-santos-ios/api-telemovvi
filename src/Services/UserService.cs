@@ -10,7 +10,16 @@ using CloudinaryDotNet;
 
 namespace api_infor_cell.src.Services
 {
-    public class UserService(IUserRepository userRepository, IProfilePermissionRepository profilePermissionRepository, IEmployeeRepository employeeRepository, ICompanyRepository companyRepository, SmsHandler smsHandler, MailHandler mailHandler, CloudinaryHandler cloudinaryHandler) : IUserService
+    public class UserService(
+        IUserRepository userRepository, 
+        IProfilePermissionRepository profilePermissionRepository, 
+        IEmployeeRepository employeeRepository, 
+        ICompanyRepository companyRepository, 
+        SmsHandler smsHandler, 
+        MailHandler mailHandler, 
+        CloudinaryHandler cloudinaryHandler, 
+        MailTemplate mailTemplate
+    ) : IUserService
     {
         #region CREATE
         public async Task<ResponseApi<User?>> CreateAsync(CreateUserDTO request)
@@ -122,7 +131,7 @@ namespace api_infor_cell.src.Services
                 ResponseApi<Company?> company = await companyRepository.GetByIdAsync(request.Company);
                 if(company.Data is null) return new(null, 400, "Falha ao cadastrar Profissional.");
                 
-                await mailHandler.SendMailAsync(request.Email, "Bem-vindo à equipe", MailTemplate.NewEmployee(request.Name, company.Data.CorporateName, profile.Data!.Name, user.Email, access.CodeAccess));
+                await mailHandler.SendMailAsync(request.Email, "Bem-vindo à equipe", mailTemplate.NewEmployee(request.Name, company.Data.CorporateName, profile.Data!.Name, user.Email, access.CodeAccess));
 
                 await employeeRepository.CreateAsync(new ()
                 {
@@ -440,9 +449,15 @@ namespace api_infor_cell.src.Services
         {
             try
             {
-                ResponseApi<User> user = await userRepository.DeleteAsync(userId);
-                if(!user.IsSuccess) return new(null, 400, user.Message);
-                return user;
+                ResponseApi<User?> user = await userRepository.GetByIdAsync(userId);
+                
+                if(user.Data is null) return new(null, 404, "Usuário não encontrado");
+                user.Data.Deleted = true;
+                user.Data.DeletedAt = DateTime.UtcNow;
+
+                await userRepository.DeleteAsync(user.Data);
+                
+                return new(user.Data);
             }
             catch
             {

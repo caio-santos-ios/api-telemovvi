@@ -217,8 +217,14 @@ namespace api_infor_cell.src.Services
         {
             try
             {
-                ResponseApi<User> User = await userRepository.DeleteAsync(id);
-                if(!User.IsSuccess) return new(null, 400, User.Message);
+                ResponseApi<User?> user = await userRepository.GetByIdAsync(id);
+                
+                if(user.Data is null) return new(null, 404, "Usuário não encontrado");
+                user.Data.Deleted = true;
+                user.Data.DeletedAt = DateTime.UtcNow;
+
+                await userRepository.DeleteAsync(user.Data);
+                
                 return new(null, 204, "Excluída com sucesso");
             }
             catch

@@ -16,7 +16,7 @@ using MongoDB.Driver.Linq;
 
 namespace api_infor_cell.src.Services
 {
-    public class AuthService(IUserRepository repository, IEmployeeRepository employeeRepository, IPlanRepository planRepository, ICompanyRepository companyRepository, IStoreRepository storeRepository, MailHandler mailHandler) : IAuthService
+    public class AuthService(IUserRepository repository, IEmployeeRepository employeeRepository, IPlanRepository planRepository, ICompanyRepository companyRepository, IStoreRepository storeRepository, MailHandler mailHandler, MailTemplate mailTemplate) : IAuthService
     {
         public async Task<ResponseApi<AuthResponse>> LoginAsync(LoginDTO request)
         {
@@ -24,54 +24,61 @@ namespace api_infor_cell.src.Services
             {
                 if (string.IsNullOrEmpty(request.Email)) return new(null, 400, "E-mail é obrigatório");
                 if (string.IsNullOrEmpty(request.Password)) return new(null, 400, "Senha é obrigatória");
-                
+
                 ResponseApi<User?> res = await GetUserToken(request.Email);
-                if(res.Data is null) return new(null, 400, res.Message);
-                
+                if (res.Data is null) return new(null, 400, res.Message);
+
                 User user = res.Data;
 
-                // FIX 1: verificar conta confirmada e bloqueio
-                if (!user.ValidatedAccess) return new(null, 400, "Conta não confirmada. Verifique seu e-mail.");
+                if (!user.ValidatedAccess)
+                {
+                    dynamic access = Util.GenerateCodeAccess(5);
+                    user.ValidatedAccess = false;
+                    user.CodeAccess = access.CodeAccess;
+                    user.CodeAccessExpiration = access.CodeAccessExpiration;
+
+                    await repository.UpdateAsync(user);
+                    await mailHandler.SendMailAsync(request.Email, "Novo Código de Confirmação", await mailTemplate.NewLinkCodeConfirmAccount(user.Name, access.CodeAccess));
+                    return new(null, 400, "Conta não confirmada. Verifique seu e-mail.");
+                }
                 if (user.Blocked) return new(null, 400, "Conta bloqueada. Entre em contato com o suporte.");
 
                 bool isValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Password);
-                if(!isValid) return new(null, 400, "Dados incorretos");
+                if (!isValid) return new(null, 400, "Dados incorretos");
 
                 ResponseApi<Company?> company = await companyRepository.GetByIdAsync(user.Company);
                 ResponseApi<Store?> store = await storeRepository.GetByIdAsync(user.Store);
                 ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(user.Plan);
 
-                // FIX 2: checar plan.Data antes de usar
                 if (plan.Data is null) return new(null, 400, "Plano não encontrado. Entre em contato com o suporte.");
 
-                AuthResponse response = new ()
+                List<Company> companies = [];
+
+                foreach (string companyId in user.Companies)
                 {
-                    Token = GenerateJwtToken(user, plan.Data.ExpirationDate, plan.Data.Type), 
-                    RefreshToken = GenerateJwtToken(user, plan.Data.ExpirationDate, plan.Data.Type, true), 
-                    Name = user.Name, 
-                    Id = user.Id, 
-                    Admin = user.Admin, 
-                    Modules = user.Modules, 
-                    Photo = user.Photo, 
-                    Email = user.Email,
-                    Plan = user.Plan,
-                    LogoCompany = company.Data is not null ? company.Data.Photo : "",
-                    NameCompany = company.Data is not null ? company.Data.TradeName : "",
-                    NameStore = store.Data is not null ? store.Data.TradeName : "",
-                    TypePlan = plan.Data.Type,
-                    SubscriberPlan = user!.SubscriberPlan,
-                    ExpirationDate = plan.Data.ExpirationDate,
-                    Master = user.Master
+                    ResponseApi<Company?> findCompany = await companyRepository.GetByIdAsync(companyId);
+                    if (findCompany.Data is not null)
+                    {
+                        companies.Add(findCompany.Data);
+                    }
+                }
+
+                AuthResponse response = new()
+                {
+                    Token = await GenerateToken(user),
+                    RefreshToken = await GenerateToken(user, true),
+                    Admin = user.Admin,
+                    Companies = companies,
+                    Id = user.Id
                 };
 
                 return new(response);
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
         public async Task<ResponseApi<dynamic>> RegisterAsync(RegisterDTO request)
         {
             try
@@ -82,11 +89,11 @@ namespace api_infor_cell.src.Services
                 if (string.IsNullOrEmpty(request.Document)) return new(null, 400, "CPF/CNPJ é obrigatório");
                 if (string.IsNullOrEmpty(request.Email)) return new(null, 400, "E-mail é obrigatório");
                 if (string.IsNullOrEmpty(request.Password)) return new(null, 400, "Senha é obrigatória");
-                
-                ResponseApi<User?> isEmail = await repository.GetByEmailAsync(request.Email);
-                if(isEmail.Data is not null || !Validator.IsEmail(request.Email)) return new(null, 400, "E-mail inválido.");
 
-                if(Validator.IsReliable(request.Password).Equals("Ruim")) return new(null, 400, $"Senha é muito fraca");
+                ResponseApi<User?> isEmail = await repository.GetByEmailAsync(request.Email);
+                if (isEmail.Data is not null || !Validator.IsEmail(request.Email)) return new(null, 400, "E-mail inválido.");
+
+                if (Validator.IsReliable(request.Password).Equals("Ruim")) return new(null, 400, $"Senha é muito fraca");
 
                 dynamic access = Util.GenerateCodeAccess(5);
 
@@ -110,11 +117,11 @@ namespace api_infor_cell.src.Services
                 };
 
                 ResponseApi<User?> response = await repository.CreateAsync(user);
-                if(response.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (response.Data is null) return new(null, 400, "Falha ao criar conta.");
 
                 DateTime date = DateTime.UtcNow;
 
-                ResponseApi<Plan?> responsePlan = await planRepository.CreateAsync(new ()
+                ResponseApi<Plan?> responsePlan = await planRepository.CreateAsync(new()
                 {
                     StartDate = date,
                     ExpirationDate = date.AddDays(10),
@@ -122,9 +129,9 @@ namespace api_infor_cell.src.Services
                     CreatedBy = user.Id
                 });
 
-                if(responsePlan.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (responsePlan.Data is null) return new(null, 400, "Falha ao criar conta.");
 
-                ResponseApi<Company?> responseCompany = await companyRepository.CreateAsync(new ()
+                ResponseApi<Company?> responseCompany = await companyRepository.CreateAsync(new()
                 {
                     CorporateName = request.CompanyName,
                     TradeName = request.CompanyName,
@@ -134,9 +141,9 @@ namespace api_infor_cell.src.Services
                     Email = request.Email,
                 });
 
-                if(responseCompany.Data is null) return new(null, 400, "Falha ao criar conta.");
-                
-                ResponseApi<Store?> responseStore = await storeRepository.CreateAsync(new ()
+                if (responseCompany.Data is null) return new(null, 400, "Falha ao criar conta.");
+
+                ResponseApi<Store?> responseStore = await storeRepository.CreateAsync(new()
                 {
                     CorporateName = request.CompanyName,
                     TradeName = "Matriz",
@@ -145,60 +152,57 @@ namespace api_infor_cell.src.Services
                     Company = responseCompany.Data.Id
                 });
 
-                if(responseStore.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (responseStore.Data is null) return new(null, 400, "Falha ao criar conta.");
 
                 response.Data.Companies.Add(responseCompany.Data.Id);
                 response.Data.Company = responseCompany.Data.Id;
                 response.Data.Plan = responsePlan.Data.Id;
                 response.Data.Stores.Add(responseStore.Data.Id);
                 response.Data.Store = responseStore.Data.Id;
-                
+
                 await repository.UpdateAsync(response.Data);
-                await mailHandler.SendMailAsync(request.Email, "Código de Confirmação", MailTemplate.ConfirmAccount(request.Name, access.CodeAccess));
+                await mailHandler.SendMailAsync(request.Email, "Código de Confirmação", mailTemplate.ConfirmAccount(request.Name, access.CodeAccess));
 
                 return new(null, 201, "Conta criada com sucesso, foi enviado o e-mail de confirmação.");
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
         public async Task<ResponseApi<dynamic>> ConfirmAccountAsync(ConfirmAccountDTO request)
         {
             try
             {
                 if (string.IsNullOrEmpty(request.Code)) return new(null, 400, "Código de confirmação é obrigatório");
-                
-                ResponseApi<User?> user = await repository.GetByCodeAccessAsync(request.Code);
-                if(user.Data is null) return new(null, 400, "Código inválido.");
 
-                if(user.Data.CodeAccessExpiration < DateTime.UtcNow) return new(null, 400, "Código expirou, solicite um novo código.");
+                ResponseApi<User?> user = await repository.GetByCodeAccessAsync(request.Code);
+                if (user.Data is null) return new(null, 400, "Código inválido.");
+
+                if (user.Data.CodeAccessExpiration < DateTime.UtcNow) return new(null, 400, "Código expirou, solicite um novo código.");
 
                 user.Data.CodeAccess = "";
                 user.Data.CodeAccessExpiration = null;
                 user.Data.ValidatedAccess = true;
 
                 ResponseApi<User?> response = await repository.UpdateAsync(user.Data);
-                if(response.Data is null) return new(null, 400, "Falha ao solicitar novo código.");
-                                
+                if (response.Data is null) return new(null, 400, "Falha ao solicitar novo código.");
+
                 return new(null, 200, "Conta verificada com sucesso.");
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
-        // FIX 4: usar NewCodeConfirmDTO — Name vinha null com RegisterDTO quebrando o template de e-mail
         public async Task<ResponseApi<dynamic>> NewCodeConfirmAsync(NewCodeConfirmDTO request)
         {
             try
             {
                 if (string.IsNullOrEmpty(request.Email)) return new(null, 400, "E-mail é obrigatório");
-                
+
                 ResponseApi<User?> user = await repository.GetByEmailAsync(request.Email);
-                if(user.Data is null || !Validator.IsEmail(request.Email)) return new(null, 400, "E-mail inválido.");
+                if (user.Data is null || !Validator.IsEmail(request.Email)) return new(null, 400, "E-mail inválido.");
 
                 dynamic access = Util.GenerateCodeAccess(5);
 
@@ -206,19 +210,17 @@ namespace api_infor_cell.src.Services
                 user.Data.CodeAccessExpiration = access.CodeAccessExpiration;
 
                 ResponseApi<User?> response = await repository.UpdateAsync(user.Data);
-                if(response.Data is null) return new(null, 400, "Falha ao solicitar novo código.");
+                if (response.Data is null) return new(null, 400, "Falha ao solicitar novo código.");
 
-                // FIX 4: usar user.Data.Name (do banco) em vez de request.Name (que era null)
-                await mailHandler.SendMailAsync(request.Email, "Novo Código de Verificação", MailTemplate.NewCodeConfirmAccount(user.Data.Name, access.CodeAccess));
+                await mailHandler.SendMailAsync(request.Email, "Novo Código de Verificação", mailTemplate.NewCodeConfirmAccount(user.Data.Name, access.CodeAccess));
 
                 return new(null, 200, "Novo código foi enviado.");
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
         public async Task<ResponseApi<AuthResponse>> RefreshTokenAsync(string token, string planId)
         {
             try
@@ -234,7 +236,7 @@ namespace api_infor_cell.src.Services
                     ValidIssuer = Environment.GetEnvironmentVariable("ISSUER"),
                     ValidAudience = Environment.GetEnvironmentVariable("AUDIENCE"),
                     IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Environment.GetEnvironmentVariable("SECRET_KEY") ?? "")),
-                    ValidateLifetime = false 
+                    ValidateLifetime = false
                 };
 
                 var principal = handler.ValidateToken(token, validationParameters, out validatedToken);
@@ -247,7 +249,7 @@ namespace api_infor_cell.src.Services
 
                 var userId = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub || c.Type == ClaimTypes.NameIdentifier)?.Value;
                 if (string.IsNullOrEmpty(userId)) return new(null, 401, "Usuário não encontrado no token.");
-                
+
                 var email = principal.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Email || c.Type == ClaimTypes.Email)?.Value;
                 if (string.IsNullOrEmpty(email)) return new(null, 401, "Usuário não encontrado no token.");
 
@@ -257,8 +259,8 @@ namespace api_infor_cell.src.Services
                 ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(planId);
                 if (plan.Data is null) return new(null, 401, "Plano não encontrado.");
 
-                string accessToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type);
-                string refreshToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type, true);
+                string accessToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type, "", "");
+                string refreshToken = GenerateJwtToken(user.Data, plan.Data.ExpirationDate, plan.Data.Type, "", "", true);
 
                 return new(new AuthResponse
                 {
@@ -268,10 +270,9 @@ namespace api_infor_cell.src.Services
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
         public async Task<ResponseApi<User>> ResetPasswordAsync(ResetPasswordDTO request)
         {
             try
@@ -280,35 +281,33 @@ namespace api_infor_cell.src.Services
                 if (string.IsNullOrEmpty(request.NewPassword)) return new(null, 400, "Nova senha é obrigatória");
                 if (string.IsNullOrEmpty(request.Id)) return new(null, 400, "Falha ao alterar senha");
 
-                // FIX 6: validar confirmação da nova senha no backend
                 if (request.NewPassword != request.ConfirmPassword) return new(null, 400, "Nova senha e confirmação não coincidem");
 
-                if(Validator.IsReliable(request.NewPassword).Equals("Ruim")) return new(null, 400, $"Nova senha é muito fraca");
+                if (Validator.IsReliable(request.NewPassword).Equals("Ruim")) return new(null, 400, $"Nova senha é muito fraca");
 
                 ResponseApi<User?> user = await repository.GetByIdAsync(request.Id);
-                if(!user.IsSuccess || user.Data is null) return new(null, 400, "Falha ao alterar senha");
-                
+                if (!user.IsSuccess || user.Data is null) return new(null, 400, "Falha ao alterar senha");
+
                 bool isValid = BCrypt.Net.BCrypt.Verify(request.Password, user.Data.Password);
-                if(!isValid) return new(null, 400, "Senha atual incorreta");
+                if (!isValid) return new(null, 400, "Senha atual incorreta");
 
                 user.Data.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
                 ResponseApi<User?> response = await repository.UpdateAsync(user.Data);
-                if(!response.IsSuccess) return new(null, 400, "Falha ao alterar senha");
+                if (!response.IsSuccess) return new(null, 400, "Falha ao alterar senha");
 
                 return new(null, 200, "Senha alterada com sucesso");
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
         public async Task<ResponseApi<User>> RequestForgotPasswordAsync(ForgotPasswordDTO request)
         {
             try
             {
                 ResponseApi<User?> responseUser = await repository.GetByEmailAsync(request.Email);
-                if(responseUser.Data is null) return new(null, 400, "Dados incorretos");
+                if (responseUser.Data is null) return new(null, 400, "Dados incorretos");
 
                 dynamic access = Util.GenerateCodeAccess();
 
@@ -316,20 +315,19 @@ namespace api_infor_cell.src.Services
                 responseUser.Data.CodeAccessExpiration = access.CodeAccessExpiration;
                 responseUser.Data.ValidatedAccess = false;
 
-                string template = MailTemplate.ForgotPasswordWeb(responseUser.Data.Name, responseUser.Data.CodeAccess);
+                string template = mailTemplate.ForgotPasswordWeb(responseUser.Data.Name, responseUser.Data.CodeAccess);
                 await mailHandler.SendMailAsync(request.Email, "Redefinição de Senha", template);
 
                 ResponseApi<User?> response = await repository.UpdateAsync(responseUser.Data);
-                if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
+                if (!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
 
                 return new(null, 200, "Foi enviado um e-mail para redefinir sua senha");
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
-
         public async Task<ResponseApi<User>> ResetPassordForgotAsync(ResetPasswordDTO request)
         {
             try
@@ -339,11 +337,11 @@ namespace api_infor_cell.src.Services
                 if (request.Password != request.NewPassword) return new(null, 400, "As senhas não podem ser diferentes");
 
                 ResponseApi<User?> responseUser = await repository.GetByCodeAccessAsync(request.CodeAccess);
-                if(responseUser.Data is null) return new(null, 400, "Falha ao alterar senha");
+                if (responseUser.Data is null) return new(null, 400, "Falha ao alterar senha");
 
-                if(responseUser.Data.CodeAccessExpiration < DateTime.UtcNow) return new(null, 400, "Código expirou, solicite um novo e-mail.");
-                
-                if(Validator.IsReliable(request.Password).Equals("Ruim")) return new(null, 400, $"Senha é muito fraca");
+                if (responseUser.Data.CodeAccessExpiration < DateTime.UtcNow) return new(null, 400, "Código expirou, solicite um novo e-mail.");
+
+                if (Validator.IsReliable(request.Password).Equals("Ruim")) return new(null, 400, $"Senha é muito fraca");
 
                 responseUser.Data.Password = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
                 responseUser.Data.ValidatedAccess = true;
@@ -351,17 +349,68 @@ namespace api_infor_cell.src.Services
                 responseUser.Data.CodeAccessExpiration = null;
 
                 ResponseApi<User?> response = await repository.UpdateAsync(responseUser.Data);
-                if(!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
-                
+                if (!response.IsSuccess) return new(null, 400, "Falha ao redefinir senha");
+
                 return new(null, 200, "Senha alterada com sucesso");
             }
             catch
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");            
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+            }
+        }
+        public async Task<ResponseApi<AuthResponse>> SelectCompanyTokenAsync(SelectCompanyTokenDTO request)
+        {
+            try
+            {
+                ResponseApi<User?> responseUser = await repository.GetByIdAsync(request.Id);
+                if (responseUser.Data is null) return new(null, 400, "Falha ao alterar empresa");
+
+                User user = responseUser.Data;
+
+                ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(user.Plan);
+
+                if (plan.Data is null) return new(null, 400, "Plano não encontrado. Entre em contato com o suporte.");
+
+                string companyName = "";
+                string storeName = "";
+
+                ResponseApi<Company?> company = await companyRepository.GetByIdAsync(request.Company);
+                if (company.Data is null) return new(null, 400, $"Falha ao fazer login - {company.Message}");
+
+                ResponseApi<Store?> store = await storeRepository.GetByCompanyIdAsync(request.Company);
+                if (store.Data is null) return new(null, 400, $"Falha ao fazer login - {store.Message}");
+
+                if (company.Data is not null)
+                {
+                    user.Company = company.Data.Id;
+                    companyName = company.Data.TradeName;
+                }
+                ;
+
+                if (store.Data is not null)
+                {
+                    user.Store = store.Data.Id;
+                    storeName = store.Data.TradeName;
+                }
+                ;
+
+                await repository.UpdateAsync(user);
+
+                AuthResponse response = new()
+                {
+                    Token = await GenerateToken(user),
+                    RefreshToken = await GenerateToken(user, true),
+                };
+
+                return new(response, 200, "Empresa alterada com sucesso");
+            }
+            catch
+            {
+                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
             }
         }
 
-        private static string GenerateJwtToken(User user, DateTime expirationDate, string typePlan, bool refresh = false)
+        private static string GenerateJwtToken(User user, DateTime expirationDate, string typePlan, string companyName, string storeName, bool refresh = false)
         {
             string? SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY") ?? "";
             string? Issuer = Environment.GetEnvironmentVariable("ISSUER") ?? "";
@@ -376,17 +425,26 @@ namespace api_infor_cell.src.Services
             [
                 new Claim(JwtRegisteredClaimNames.Sub, user.Id),
                 new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Name, user.Name),
+                new Claim(JwtRegisteredClaimNames.Nickname, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("type", refresh ? "refresh" : "access"),
                 new Claim("companies", companiesJson),
                 new Claim("stores", storesJson),
                 new Claim("plan", user.Plan),
                 new Claim("store", user.Store),
                 new Claim("company", user.Company),
+                new Claim("companyName", companyName),
+                new Claim("storeName", storeName),
                 new Claim("typePlan", typePlan),
+                new Claim("admin", user.Admin.ToString()),
+                new Claim("master", user.Master.ToString()),
                 new Claim("planExpirationDate", expirationDate.ToString("yyyy-MM-ddTHH:mm:ssZ")),
-                new Claim(JwtRegisteredClaimNames.Nickname, user.UserName),
-                new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-                new Claim("type", refresh ? "refresh" : "access")
+                new Claim("modules", JsonSerializer.Serialize(user.Modules, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                }))
             ];
 
             SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
@@ -401,44 +459,124 @@ namespace api_infor_cell.src.Services
 
             return new JwtSecurityTokenHandler().WriteToken(token);
         }
-
-        private async Task<ResponseApi<User?>> GetUserToken (string email)
+        private async Task<ResponseApi<User?>> GetUserToken(string email)
         {
             ResponseApi<User?> responseUser = await repository.GetByEmailAsync(email);
-            if(responseUser.Data is null) 
+            if (responseUser.Data is null)
             {
                 return new(null, 400, "Dados incorretos");
-            };
+            }
+            ;
 
-            if(responseUser.Data.Role == Enums.User.RoleEnum.Employee) {
+            if (responseUser.Data.Role == Enums.User.RoleEnum.Employee)
+            {
 
                 ResponseApi<Employee?> responseEmployee = await employeeRepository.GetByUserIdAsync(responseUser.Data.Id);
-                if(responseEmployee.Data is null) return new(null, 400, "Dados incorretos");
-                
+                if (responseEmployee.Data is null) return new(null, 400, "Dados incorretos");
+
                 DayOfWeek today = DateTime.Now.DayOfWeek;
                 TimeSpan now = DateTime.Now.TimeOfDay;
                 Calendar calendar = responseEmployee.Data.Calendar;
                 List<string> hoursString = new();
                 switch (today)
                 {
-                    case DayOfWeek.Monday:    hoursString = calendar.Monday; break;
-                    case DayOfWeek.Tuesday:   hoursString = calendar.Tuesday; break;
+                    case DayOfWeek.Monday: hoursString = calendar.Monday; break;
+                    case DayOfWeek.Tuesday: hoursString = calendar.Tuesday; break;
                     case DayOfWeek.Wednesday: hoursString = calendar.Wednesday; break;
-                    case DayOfWeek.Thursday:  hoursString = calendar.Thursday; break;
-                    case DayOfWeek.Friday:    hoursString = calendar.Friday; break;
-                    case DayOfWeek.Saturday:  hoursString = calendar.Saturday; break;
-                    case DayOfWeek.Sunday:    hoursString = calendar.Sunday; break;
+                    case DayOfWeek.Thursday: hoursString = calendar.Thursday; break;
+                    case DayOfWeek.Friday: hoursString = calendar.Friday; break;
+                    case DayOfWeek.Saturday: hoursString = calendar.Saturday; break;
+                    case DayOfWeek.Sunday: hoursString = calendar.Sunday; break;
                 }
 
                 var times = hoursString?.Select(h => TimeSpan.Parse(h)).ToList() ?? new List<TimeSpan>();
 
-                if(times.Count == 0) return new(null, 400, "Fora do horário permitido");
+                if (times.Count == 0) return new(null, 400, "Fora do horário permitido");
                 bool isBetween = now >= times.Min() && now <= times.Max();
-                if(!isBetween) return new(null, 400, "Fora do horário permitido");
-                if(responseUser.Data.Stores.Count == 0) return new(null, 400, "O colaborador não possui nenhuma loja vinculada ao seu perfil.");
-            };
+                if (!isBetween) return new(null, 400, "Fora do horário permitido");
+                if (responseUser.Data.Stores.Count == 0) return new(null, 400, "O colaborador não possui nenhuma loja vinculada ao seu perfil.");
+            }
+            ;
 
             return new(responseUser.Data);
+        }
+        private async Task<string> GenerateToken(User user, bool refresh = false)
+        {
+            string companyName = "";
+            string companyPhoto = "";
+            string storeName = "";
+
+            ResponseApi<Plan?> plan = await planRepository.GetByIdAsync(user.Plan);
+            if (plan.Data is null) return "";
+
+            ResponseApi<Company?> company = await companyRepository.GetByIdAsync(user.Company);
+            if (company.Data is null) return "";
+
+            ResponseApi<Store?> store = await storeRepository.GetByCompanyIdAsync(user.Company);
+            if (store.Data is null) return "";
+
+            if (company.Data is not null)
+            {
+                user.Company = company.Data.Id;
+                companyName = company.Data.TradeName;
+                companyPhoto = company.Data.Photo;
+            }
+
+            if (store.Data is not null)
+            {
+                user.Store = store.Data.Id;
+                storeName = store.Data.TradeName;
+            }
+
+            string? SecretKey = Environment.GetEnvironmentVariable("SECRET_KEY") ?? "";
+            string? Issuer = Environment.GetEnvironmentVariable("ISSUER") ?? "";
+            string? Audience = Environment.GetEnvironmentVariable("AUDIENCE") ?? "";
+
+            SymmetricSecurityKey key = new(Encoding.UTF8.GetBytes(SecretKey));
+
+            string companiesJson = JsonSerializer.Serialize(user.Companies);
+            string storesJson = JsonSerializer.Serialize(user.Stores);
+
+            Claim[] claims =
+            [
+                new Claim(JwtRegisteredClaimNames.Sub, user.Id),
+                new Claim(JwtRegisteredClaimNames.Email, user.Email),
+                new Claim(JwtRegisteredClaimNames.Name, user.Name),
+                new Claim(JwtRegisteredClaimNames.Nickname, user.UserName),
+                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+                new Claim(ClaimTypes.Role, user.Role.ToString()),
+                new Claim("type", refresh ? "refresh" : "access"),
+                new Claim("companies", companiesJson),
+                new Claim("stores", storesJson),
+                new Claim("plan", user.Plan),
+                new Claim("store", user.Store),
+                new Claim("company", user.Company),
+                new Claim("companyName", companyName),
+                new Claim("companyPhoto", companyPhoto),
+                new Claim("storeName", storeName),
+                new Claim("typePlan", plan.Data.Type),
+                new Claim("admin", user.Admin.ToString()),
+                new Claim("master", user.Master.ToString()),
+                new Claim("planExpirationDate", plan.Data.ExpirationDate.ToString("yyyy-MM-ddTHH:mm:ssZ")),
+                new Claim("modules", JsonSerializer.Serialize(user.Modules, new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase
+                }))
+            ];
+
+            SigningCredentials creds = new(key, SecurityAlgorithms.HmacSha256);
+
+            JwtSecurityToken token = new(
+                issuer: Issuer,
+                audience: Audience,
+                claims: claims,
+                expires: refresh ? DateTime.UtcNow.AddDays(7) : DateTime.UtcNow.AddHours(2),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+            
+            return "";
         }
     }
 }

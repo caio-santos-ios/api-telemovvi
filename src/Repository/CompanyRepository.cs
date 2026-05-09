@@ -142,12 +142,12 @@ namespace api_infor_cell.src.Repository
         {
             try
             {
-                Company? address = await context.Companies.Find(x => x.Id == id && !x.Deleted).FirstOrDefaultAsync();
-                return new(address);
+                Company? company = await context.Companies.Find(x => x.Id == id && !x.Deleted).FirstOrDefaultAsync();
+                return new(company);
             }
-            catch
+            catch(Exception ex)
             {
-                return new(null, 500, "Falha ao buscar Empresa");
+                return new(null, 500, $"Falha ao buscar Empresa - ERRO: {ex.Message}");
             }
         }         
         public async Task<ResponseApi<List<Company>>> GetTotalCompanies(string planId)
