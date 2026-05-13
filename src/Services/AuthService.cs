@@ -546,6 +546,8 @@ namespace api_infor_cell.src.Services
                 new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
                 new Claim("type", refresh ? "refresh" : "access"),
+                new Claim("role", user.Role.ToString()),
+                new Claim("photo", user.Photo),
                 new Claim("companies", companiesJson),
                 new Claim("stores", storesJson),
                 new Claim("plan", user.Plan),
@@ -554,10 +556,11 @@ namespace api_infor_cell.src.Services
                 new Claim("companyName", companyName),
                 new Claim("companyPhoto", companyPhoto),
                 new Claim("storeName", storeName),
-                new Claim("typePlan", plan.Data.Type),
+                new Claim("planSubscriber", user.SubscriberPlan.ToString()),
+                new Claim("planType", plan.Data.Type),
+                new Claim("planExpirationDate", plan.Data.ExpirationDate.ToString("yyyy-MM-ddTHH:mm:ssZ")),
                 new Claim("admin", user.Admin.ToString()),
                 new Claim("master", user.Master.ToString()),
-                new Claim("planExpirationDate", plan.Data.ExpirationDate.ToString("yyyy-MM-ddTHH:mm:ssZ")),
                 new Claim("modules", JsonSerializer.Serialize(user.Modules, new JsonSerializerOptions
                 {
                     PropertyNamingPolicy = JsonNamingPolicy.CamelCase
@@ -575,8 +578,6 @@ namespace api_infor_cell.src.Services
             );
 
             return new JwtSecurityTokenHandler().WriteToken(token);
-            
-            return "";
         }
     }
 }
