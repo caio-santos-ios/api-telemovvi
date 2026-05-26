@@ -18,5 +18,8 @@ namespace api_infor_cell.src.Models
         
         [BsonElement("expirationDate")]
         public DateTime ExpirationDate {get;set;} = DateTime.UtcNow;
+        
+        [BsonElement("status")]
+        public string Status { get; set; } = string.Empty; 
     }
 }

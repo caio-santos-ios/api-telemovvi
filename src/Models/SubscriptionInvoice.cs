@@ -4,11 +4,20 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace api_infor_cell.src.Models
 {
-    public class Subscription : ModelMasterBase
+    public class SubscriptionInvoice : ModelBase
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = string.Empty;
+
+        [BsonElement("plan")]
+        public string Plan { get; set; } = string.Empty;
+
+        [BsonElement("company")]
+        public string Company { get; set; } = string.Empty;
+
+        [BsonElement("store")]
+        public string Store { get; set; } = string.Empty;
 
         [BsonElement("asaasCustomerId")]
         public string AsaasCustomerId { get; set; } = string.Empty;
@@ -26,7 +35,7 @@ namespace api_infor_cell.src.Models
         public string BillingType { get; set; } = string.Empty;
 
         [BsonElement("status")]
-        public string Status { get; set; } = "Pendente";
+        public string Status { get; set; } = "PENDING";
 
         [BsonElement("value")]
         public decimal Value { get; set; }
@@ -38,13 +47,7 @@ namespace api_infor_cell.src.Models
         public DateTime? PaymentDate { get; set; }
 
         [BsonElement("dueDate")]
-        public DateTime? DueDate { get; set; }
-
-        [BsonElement("nextDueDate")]
-        public DateTime? NextDueDate { get; set; }
-
-        [BsonElement("startDate")]
-        public DateTime StartDate { get; set; } = DateTime.UtcNow;
+        public DateTime DueDate { get; set; }
 
         [BsonElement("expirationDate")]
         public DateTime? ExpirationDate { get; set; }

@@ -76,7 +76,7 @@ namespace api_infor_cell.src.Handlers
                     value,
                     nextDueDate,
                     cycle = "MONTHLY",
-                    description = "Assinatura ERP SaaS",
+                    description = "Assinatura ERP Telemovvi",
                     creditCard = new
                     {
                         holderName = card.HolderName,
@@ -105,7 +105,7 @@ namespace api_infor_cell.src.Handlers
                     value,
                     nextDueDate,
                     cycle = "MONTHLY",
-                    description = "Assinatura ERP SaaS"
+                    description = "Assinatura ERP Telemovvi"
                 };
             }
 

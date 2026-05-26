@@ -5,6 +5,7 @@ using api_infor_cell.src.Repository;
 using api_infor_cell.src.Services;
 using api_infor_cell.src.Shared.Templates;
 using api_infor_cell.src.Shared.Validators;
+using api_telemovvi.src.Handlers;
 using CloudinaryDotNet;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
@@ -168,6 +169,7 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddTransient<MailHandler>();
             builder.Services.AddTransient<CloudinaryHandler>();
             builder.Services.AddSingleton<AsaasHandler>();
+            builder.Services.AddSingleton<ReceitaWSHandler>();
 
             // VALIDATOR
             builder.Services.AddSingleton<ValidatorPlan>();

@@ -336,8 +336,9 @@ namespace api_infor_cell.src.Repository
                 User? user = await context.Users.Find(x => x.Email == email && !x.Deleted).FirstOrDefaultAsync();
                 return new(user);
             }
-            catch
+            catch(Exception ex)
             {
+                System.Console.WriteLine(ex.Message);
                 return new(null, 500, "Falha ao buscar usuário");
             }
         }

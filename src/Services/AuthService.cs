@@ -13,10 +13,22 @@ using api_infor_cell.src.Shared.Validators;
 using api_infor_cell.src.Shared.Utils;
 using System.Text.Json;
 using MongoDB.Driver.Linq;
+using api_telemovvi.src.Handlers;
+using CloudinaryDotNet.Core;
 
 namespace api_infor_cell.src.Services
 {
-    public class AuthService(IUserRepository repository, IEmployeeRepository employeeRepository, IPlanRepository planRepository, ICompanyRepository companyRepository, IStoreRepository storeRepository, MailHandler mailHandler, MailTemplate mailTemplate) : IAuthService
+    public class AuthService(
+        IUserRepository repository,
+        IEmployeeRepository employeeRepository, 
+        IPlanRepository planRepository, 
+        ICompanyRepository companyRepository, 
+        IStoreRepository storeRepository,
+        IAddressRepository addressRepository, 
+        MailHandler mailHandler,
+        ReceitaWSHandler receitaWSHandler, 
+        MailTemplate mailTemplate
+    ) : IAuthService
     {
         public async Task<ResponseApi<AuthResponse>> LoginAsync(LoginDTO request)
         {
@@ -117,7 +129,7 @@ namespace api_infor_cell.src.Services
                 };
 
                 ResponseApi<User?> response = await repository.CreateAsync(user);
-                if (response.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (response.Data is null) return new(null, 400, "Falha ao criar conta user.");
 
                 DateTime date = DateTime.UtcNow;
 
@@ -129,7 +141,7 @@ namespace api_infor_cell.src.Services
                     CreatedBy = user.Id
                 });
 
-                if (responsePlan.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (responsePlan.Data is null) return new(null, 400, "Falha ao criar conta plan.");
 
                 ResponseApi<Company?> responseCompany = await companyRepository.CreateAsync(new()
                 {
@@ -141,7 +153,7 @@ namespace api_infor_cell.src.Services
                     Email = request.Email,
                 });
 
-                if (responseCompany.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (responseCompany.Data is null) return new(null, 400, "Falha ao criar conta company.");
 
                 ResponseApi<Store?> responseStore = await storeRepository.CreateAsync(new()
                 {
@@ -152,7 +164,24 @@ namespace api_infor_cell.src.Services
                     Company = responseCompany.Data.Id
                 });
 
-                if (responseStore.Data is null) return new(null, 400, "Falha ao criar conta.");
+                if (responseStore.Data is null) return new(null, 400, "Falha ao criar conta store.");
+
+                if(request.Document.Length == 18)
+                {
+                    ResponseApi<Address?> address = await receitaWSHandler.GetAddressByCNPJ(request.Document, "");
+                    if(address.Data is not null)
+                    {
+                        Address addressCompany = address.Data.Clone();
+                        addressCompany.Parent = "company";
+                        addressCompany.ParentId = responseCompany.Data.Id;
+
+                        Address addressStore = address.Data.Clone();
+                        addressStore.Parent = "store";
+                        addressStore.ParentId = responseStore.Data.Id;
+
+                        await addressRepository.CreateManyAsync(new () { addressCompany, addressStore });
+                    }
+                }
 
                 response.Data.Companies.Add(responseCompany.Data.Id);
                 response.Data.Company = responseCompany.Data.Id;
@@ -559,6 +588,7 @@ namespace api_infor_cell.src.Services
                 new Claim("planSubscriber", user.SubscriberPlan.ToString()),
                 new Claim("planType", plan.Data.Type),
                 new Claim("planExpirationDate", plan.Data.ExpirationDate.ToString("yyyy-MM-ddTHH:mm:ssZ")),
+                new Claim("planStatus", plan.Data.Status),
                 new Claim("admin", user.Admin.ToString()),
                 new Claim("master", user.Master.ToString()),
                 new Claim("modules", JsonSerializer.Serialize(user.Modules, new JsonSerializerOptions

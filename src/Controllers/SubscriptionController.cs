@@ -3,6 +3,7 @@ using api_infor_cell.src.Interfaces;
 using api_infor_cell.src.Models;
 using api_infor_cell.src.Models.Base;
 using api_infor_cell.src.Shared.DTOs;
+using api_telemovvi.src.Shared.DTOs.Subscription;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -12,10 +13,6 @@ namespace api_infor_cell.src.Controllers
     [ApiController]
     public class SubscriptionController(ISubscriptionService service) : ControllerBase
     {
-        /// <summary>
-        /// Assina um plano. Autenticado.
-        /// Body: { planType, billingType, cardHolderName?, cardNumber?, cardExpiryMonth?, cardExpiryYear?, cardCvv? }
-        /// </summary>
         [Authorize]
         [HttpPost]
         public async Task<IActionResult> CreateSubscription([FromBody] CreateSubscriptionDTO body)
@@ -27,27 +24,39 @@ namespace api_infor_cell.src.Controllers
             return StatusCode(response.StatusCode, new { response.Result });
         }
 
-        /// <summary>Busca a assinatura ativa do usuário logado</summary>
+        [HttpPost("webhook")]
+        public async Task<IActionResult> SignaturePlan([FromBody] HandlerWebhookDTO request)
+        {
+            string token = Request.Headers["asaas-access-token"].ToString();
+            string tokenWebhook = Environment.GetEnvironmentVariable("TOKEN_WEBHOOK") ?? "";
+            if (token != tokenWebhook) return Unauthorized();
+
+            ResponseApi<string> response = await service.HandlerWebhookAsync(request);
+            return StatusCode(response.StatusCode, new { response.Result });
+        }
+        
         [Authorize]
         [HttpGet("current")]
         public async Task<IActionResult> GetCurrentSubscription()
         {
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId is null) return Unauthorized();
+            string? plan = User.FindFirst("plan")?.Value;
 
-            ResponseApi<Subscription?> response = await service.GetCurrentSubscriptionAsync(userId);
+            if (plan is null) return Unauthorized();
+
+
+            ResponseApi<Subscription?> response = await service.GetCurrentSubscriptionAsync(plan);
             return StatusCode(response.StatusCode, new { response.Result });
         }
 
-        /// <summary>Busca histórico de pagamentos da assinatura do usuário logado</summary>
         [Authorize]
         [HttpGet("payments")]
         public async Task<IActionResult> GetPaymentHistory()
         {
-            string? userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (userId is null) return Unauthorized();
+            string? plan = User.FindFirst("plan")?.Value;
 
-            var response = await service.GetPaymentHistoryAsync(userId);
+            if (plan is null) return Unauthorized();
+
+            var response = await service.GetPaymentHistoryAsync(plan);
             return StatusCode(response.StatusCode, new { response.Result });
         }
 
@@ -70,20 +79,6 @@ namespace api_infor_cell.src.Controllers
             if (userId is null) return Unauthorized();
 
             ResponseApi<Subscription?> response = await service.CancelSubscriptionAsync(userId);
-            return StatusCode(response.StatusCode, new { response.Result });
-        }
-
-        /// <summary>
-        /// Webhook do Asaas — NÃO requer autenticação.
-        /// Configure a URL no painel do Asaas: POST https://sua-api.com/api/subscriptions/webhook
-        /// </summary>
-        [HttpPost("webhook")]
-        public async Task<IActionResult> Webhook([FromBody] AsaasWebhookDTO body)
-        {
-            var token = Request.Headers["asaas-access-token"].ToString();
-            // if (token != _configuration["Asaas:WebhookToken"]) return Unauthorized();
-
-            ResponseApi<string> response = await service.HandleWebhookAsync(body);
             return StatusCode(response.StatusCode, new { response.Result });
         }
     }

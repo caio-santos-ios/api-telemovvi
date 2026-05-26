@@ -19,8 +19,10 @@ namespace api_infor_cell.src.Configuration
                 {
                     mongoClientSettings.SslSettings = new SslSettings
                     {
-                        EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                        EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                        CheckCertificateRevocation = false
                     };
+                    mongoClientSettings.AllowInsecureTls = true;
                 }
                 
                 var mongoClient = new MongoClient(mongoClientSettings);
@@ -183,6 +185,10 @@ namespace api_infor_cell.src.Configuration
         public IMongoCollection<Subscription> Subscriptions
         {
             get { return Database.GetCollection<Subscription>("subscriptions"); }
+        }
+        public IMongoCollection<SubscriptionInvoice> SubscriptionInvoices
+        {
+            get { return Database.GetCollection<SubscriptionInvoice>("subscription_invoices"); }
         }
         #endregion
 

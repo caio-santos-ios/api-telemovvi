@@ -13,6 +13,7 @@ namespace api_infor_cell.src.Interfaces
         // Task<ResponseApi<dynamic?>> GetByParentIdAggregationAsync(string parentId, string parent);
         Task<int> GetCountDocumentsAsync(PaginationUtil<Address> pagination);
         Task<ResponseApi<Address?>> CreateAsync(Address address);
+        Task<ResponseApi<List<Address>?>> CreateManyAsync(List<Address> addresses);
         Task<ResponseApi<Address?>> UpdateAsync(Address address);
         Task<ResponseApi<Address>> DeleteAsync(string id);
     }
