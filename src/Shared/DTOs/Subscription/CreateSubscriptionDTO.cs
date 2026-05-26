@@ -26,9 +26,13 @@ namespace api_infor_cell.src.Shared.DTOs
     {
         public string Id { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
+        public string Customer { get; set; } = string.Empty;
         public string Subscription { get; set; } = string.Empty;
+        public string DateCreated { get; set; } = string.Empty;
         public decimal Value { get; set; }
         public string BillingType { get; set; } = string.Empty;
         public string DueDate { get; set; } = string.Empty;
+        public string InvoiceUrl { get; set; } = string.Empty;
+        public string InvoiceNumber { get; set; } = string.Empty;
     }
 }

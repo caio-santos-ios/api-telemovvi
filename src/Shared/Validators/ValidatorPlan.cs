@@ -5,19 +5,28 @@ using MongoDB.Driver;
 namespace api_infor_cell.src.Shared.Validators;
 public class ValidatorPlan(AppDbContext context)
 {
-    public async Task<ResponseApi<dynamic>> ValidatorConfigurationPlan(string planId, string planType)
+    public async Task<ResponseApi<dynamic>> ValidatorConfigurationPlan(string planId, string planType, string collection)
     {
-        long quantityCompanies = await context.Companies.Find(x => !x.Deleted && x.Plan == planId).CountDocumentsAsync();
+        if("companies".Equals(collection))
+        {
+            long quantityCompanies = await context.Companies.Find(x => !x.Deleted && x.Plan == planId).CountDocumentsAsync();
 
-        if(!VerifyQuantityCompanies(planType, quantityCompanies + 1)) return new(null, 400, $"Seu plano não permite ter {quantityCompanies + 1} Empresas.");
+            if(!VerifyQuantityCompanies(planType, quantityCompanies + 1)) return new(null, 400, $"Seu plano não permite ter {quantityCompanies + 1} Empresas.");
+        }
         
-        long quantityStores = await context.Stores.Find(x => !x.Deleted && x.Plan == planId).CountDocumentsAsync();
+        if("stores".Equals(collection))
+        {
+            long quantityStores = await context.Stores.Find(x => !x.Deleted && x.Plan == planId).CountDocumentsAsync();
+            
+            if(!VerifyQuantityStores(planType, quantityStores + 1)) return new(null, 400, $"Seu plano não permite ter {quantityStores + 1} Lojas.");
+        }
         
-        if(!VerifyQuantityStores(planType, quantityStores + 1)) return new(null, 400, $"Seu plano não permite ter {quantityStores + 1} Lojas.");
-        
-        long quantityUsers = await context.Users.Find(x => !x.Deleted && x.Plan == planId).CountDocumentsAsync();
+        if("users".Equals(collection))
+        {
+            long quantityUsers = await context.Users.Find(x => !x.Deleted && x.Plan == planId && !x.Admin).CountDocumentsAsync();
 
-        if(!VerifyQuantityUsers(planType, quantityUsers + 1)) return new(null, 400, $"Seu plano não permite ter {quantityUsers + 1} Usuários.");
+            if(!VerifyQuantityUsers(planType, quantityUsers + 1)) return new(null, 400, $"Seu plano não permite ter {quantityUsers + 1} Usuários.");
+        }
         
         return new(null, 200);
     }

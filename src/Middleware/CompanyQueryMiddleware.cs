@@ -1,7 +1,6 @@
 using System.Text;
 using System.Text.Json;
 using api_infor_cell.src.Models.Base;
-using api_infor_cell.src.Shared.Utils;
 using api_infor_cell.src.Shared.Validators;
 using Microsoft.Extensions.Primitives;
 
@@ -45,12 +44,18 @@ public class CompanyQueryMiddleware(RequestDelegate _next, ValidatorPlan validat
             string? store = context.User.FindFirst("store")?.Value;
             string? typePlan = context.User.FindFirst("typePlan")?.Value;
             string? userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
-
+            
             if(path.Contains("companies") || path.Contains("stores") || path.Contains("users")) 
             {
                 if(method == HttpMethods.Post) 
                 {
-                    ResponseApi<dynamic> validator = await validatorPlan.ValidatorConfigurationPlan(plan!, typePlan!);
+                    string collection = "";
+                    
+                    if(path.Contains("companies")) collection = "companies";
+                    if(path.Contains("stores")) collection = "stores";
+                    if(path.Contains("users")) collection = "users";
+
+                    ResponseApi<dynamic> validator = await validatorPlan.ValidatorConfigurationPlan(plan!, typePlan!, collection);
                     if(!validator.IsSuccess)
                     {
                         context.Response.StatusCode = StatusCodes.Status400BadRequest;
@@ -156,34 +161,17 @@ public class CompanyQueryMiddleware(RequestDelegate _next, ValidatorPlan validat
                 
                 if(method == HttpMethods.Get) 
                 {
-                    var companiesClaim = context.User.FindFirst("companies")?.Value;
+                    var queryItems = context.Request.Query.ToDictionary(x => x.Key, x => x.Value);
                     
-                    if (!string.IsNullOrEmpty(companiesClaim))
+                    queryItems["company"] = company;
+                    queryItems["plan"] = plan;
+
+                    if(!new List<string>() {"/api/stores", "/api/stores/select"}.Contains(path))
                     {
-                        try 
-                        {
-                            var companyIds = JsonSerializer.Deserialize<List<string>>(companiesClaim);
-
-                            if (companyIds != null && companyIds.Any())
-                            {
-                                var queryItems = context.Request.Query.ToDictionary(x => x.Key, x => x.Value);
-                                
-                                queryItems["company"] = new Microsoft.Extensions.Primitives.StringValues(companyIds.ToArray());
-                                queryItems["plan"] = plan;
-
-                                if(!new List<string>() {"/api/stores", "/api/stores/select"}.Contains(path))
-                                {
-                                    queryItems["store"] = store;
-                                }
-
-                                context.Request.Query = new QueryCollection(queryItems);
-                            }
-                        }
-                        catch (JsonException)
-                        {
-
-                        }
+                        queryItems["store"] = store;
                     }
+                    
+                    context.Request.Query = new QueryCollection(queryItems);
                 }
             }
             else 

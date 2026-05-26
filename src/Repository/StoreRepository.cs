@@ -121,7 +121,18 @@ namespace api_infor_cell.src.Repository
                 return new(null, 500, "Falha ao buscar Lojas");
             }
         }
-        
+        public async Task<ResponseApi<Store?>> GetByCompanyIdAsync(string companyId)
+        {
+            try
+            {
+                Store? store = await context.Stores.Find(x => x.Company == companyId && !x.Deleted).FirstOrDefaultAsync();
+                return new(store);
+            }
+            catch
+            {
+                return new(null, 500, "Falha ao buscar Lojas");
+            }
+        }        
         public async Task<ResponseApi<List<dynamic>>> GetSelectAsync(PaginationUtil<Store> pagination)
         {
             try

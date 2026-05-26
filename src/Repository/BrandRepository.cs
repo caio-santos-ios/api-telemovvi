@@ -113,7 +113,7 @@ namespace api_infor_cell.src.Repository
         }
         catch
         {
-            return new(null, 500, "Falha ao buscar Marcas");
+            return new(null, 500, "Falha ao buscar Grupo de Produtos");
         }
     }
 

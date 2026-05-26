@@ -1,10 +1,14 @@
+using api_infor_cell.src.Configuration;
+using api_infor_cell.src.Models;
+using MongoDB.Driver;
+
 namespace api_infor_cell.src.Shared.Templates
 {
 
-    public static class MailTemplate
+    public class MailTemplate(AppDbContext context)
     {
-        private static readonly string UiURI =  Environment.GetEnvironmentVariable("UI_URI") ?? "";
-        public static string ForgotPasswordWeb(string name, string code)
+        private readonly string UiURI =  Environment.GetEnvironmentVariable("UI_URI") ?? "";
+        public string ForgotPasswordWeb(string name, string code)
         {
             return $@"
                 <html>
@@ -88,7 +92,7 @@ namespace api_infor_cell.src.Shared.Templates
                     </body>
                 </html>";
         }
-        public static string ForgotPasswordApp(string code)
+        public string ForgotPasswordApp(string code)
         {
             return $@"
                 <html>
@@ -132,7 +136,7 @@ namespace api_infor_cell.src.Shared.Templates
                     </body>
                 </html>";
         }
-        public static string FirstAccess(string name, string email, string passowrd)
+        public string FirstAccess(string name, string email, string passowrd)
         {
             return $@"               
                 <html>
@@ -204,7 +208,7 @@ namespace api_infor_cell.src.Shared.Templates
                 </html>
             ";
         }
-        public static string ConfirmAccount(string name, string code)
+        public string ConfirmAccount(string name, string code)
         {
             return $@"
                 <html>
@@ -276,7 +280,7 @@ namespace api_infor_cell.src.Shared.Templates
                     </body>
                 </html>";
         }
-        public static string NewCodeConfirmAccount(string name, string code)
+        public string NewCodeConfirmAccount(string name, string code)
         {
             return $@"
                 <html>
@@ -361,14 +365,7 @@ namespace api_infor_cell.src.Shared.Templates
                     </body>
                 </html>";
         }
-
-        public static string NewEmployee(
-            string name,
-            string nameEmpresa,
-            string cargo,
-            string email,
-            string senhaProvisoira
-        )
+        public string NewEmployee(string name, string nameEmpresa, string cargo, string email, string senhaProvisoira)
         {
             return $@"
                 <html>
@@ -543,6 +540,20 @@ namespace api_infor_cell.src.Shared.Templates
                 </body>
                 </html>
             ";
+        }
+        public async Task<string> NewLinkCodeConfirmAccount(string name, string code)
+        {
+            Template? templates = await context.Templates.Find(x => x.Code == "NEW_LINK_CODE_CONFIRM_ACCOUNT" && !x.Deleted).FirstOrDefaultAsync();
+            string html = $"{UiURI}/confirm-account/{code}";
+            
+            if(templates is not null)
+            {
+                html = templates.Html;
+                html = html.Replace("{{name}}", name).Replace("{{code}}", code).Replace("{{ui_uri}}", UiURI);
+            }
+            
+
+            return html;
         }
     }
 }

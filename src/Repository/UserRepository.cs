@@ -305,6 +305,18 @@ namespace api_infor_cell.src.Repository
                 return new(null, 500, "Falha ao buscar usuário");
             }
         }
+        public async Task<ResponseApi<User?>> GetBySubscribedAsync(string plan)
+        {
+            try
+            {
+                User? user = await context.Users.Find(x => x.SubscriberPlan && x.Plan == plan && !x.Deleted).FirstOrDefaultAsync();
+                return new(user);
+            }
+            catch
+            {
+                return new(null, 500, "Falha ao buscar usuário");
+            }
+        }
         public async Task<ResponseApi<User?>> GetByUserNameAsync(string userName)
         {
             try
@@ -324,8 +336,9 @@ namespace api_infor_cell.src.Repository
                 User? user = await context.Users.Find(x => x.Email == email && !x.Deleted).FirstOrDefaultAsync();
                 return new(user);
             }
-            catch
+            catch(Exception ex)
             {
+                System.Console.WriteLine(ex.Message);
                 return new(null, 500, "Falha ao buscar usuário");
             }
         }
@@ -461,16 +474,11 @@ namespace api_infor_cell.src.Repository
         }
         #endregion
         #region DELETE
-        public async Task<ResponseApi<User>> DeleteAsync(string userId)
+        public async Task<ResponseApi<User>> DeleteAsync(User user)
         {
             try
             {
-                User? user = await context.Users.Find(x => x.Id == userId && !x.Deleted).FirstOrDefaultAsync();
-                if(user is null) return new(null, 404, "Usuário não encontrado");
-                user.Deleted = true;
-                user.DeletedAt = DateTime.UtcNow;
-
-                await context.Users.ReplaceOneAsync(x => x.Id == userId, user);
+                await context.Users.ReplaceOneAsync(x => x.Id == user.Id, user);
 
                 return new(user, 204, "Usuário excluído com sucesso");
             }

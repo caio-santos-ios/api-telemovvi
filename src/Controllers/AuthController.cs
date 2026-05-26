@@ -44,7 +44,7 @@ namespace api_infor_cell.src.Controllers
         
         [HttpPost]
         [Route("new-code-confirm")]
-        public async Task<IActionResult> NewCodeConfirmAsync([FromBody] RegisterDTO body)
+        public async Task<IActionResult> NewCodeConfirmAsync([FromBody] NewCodeConfirmDTO body)
         {
             if (body == null) return BadRequest("Dados inválidos");
 
@@ -96,6 +96,16 @@ namespace api_infor_cell.src.Controllers
             if (request == null) return BadRequest("Dados inválidos");
 
             ResponseApi<User> response = await authService.ResetPassordForgotAsync(request);
+            return StatusCode(response.StatusCode, new { response.Result });
+        }
+        
+        [HttpPut]
+        [Route("select-company-token")]
+        public async Task<IActionResult> SelectCompanyTokenAsync([FromBody] SelectCompanyTokenDTO request)
+        {
+            if (request == null) return BadRequest("Dados inválidos");
+
+            ResponseApi<AuthResponse> response = await authService.SelectCompanyTokenAsync(request);
             return StatusCode(response.StatusCode, new { response.Result });
         }
     }

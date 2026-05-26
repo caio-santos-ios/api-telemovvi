@@ -132,6 +132,19 @@ namespace api_infor_cell.src.Repository
             return new(null, 500, "Falha ao criar Item");  
         }
     }
+    public async Task<ResponseApi<List<Address>?>> CreateManyAsync(List<Address> addresses)
+    {
+        try
+        {
+            await context.Addresses.InsertManyAsync(addresses);
+
+            return new(addresses, 201, "Item criado com sucesso");
+        }
+        catch
+        {
+            return new(null, 500, "Falha ao criar Item");  
+        }
+    }
     #endregion
     
     #region UPDATE

@@ -13,5 +13,6 @@ namespace api_infor_cell.src.Shared.DTOs
                 public string Whatsapp { get; set; } = string.Empty;
                 public string Photo { get; set; } = string.Empty;
                 public string Website { get; set; } = string.Empty;
+                public string CreatedBy { get; set; } = string.Empty;
         }
 }

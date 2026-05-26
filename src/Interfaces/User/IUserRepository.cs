@@ -13,6 +13,7 @@ namespace api_infor_cell.src.Interfaces
         Task<ResponseApi<dynamic?>> GetEmployeeByIdAggregateAsync(string id);
         Task<ResponseApi<dynamic?>> GetLoggedAsync(string id);
         Task<ResponseApi<User?>> GetByIdAsync(string id);
+        Task<ResponseApi<User?>> GetBySubscribedAsync(string plan);
         Task<ResponseApi<User?>> GetByUserNameAsync(string userName);
         Task<ResponseApi<User?>> GetByEmailAsync(string email);
         Task<ResponseApi<User?>> GetByPhoneAsync(string phone);
@@ -24,6 +25,6 @@ namespace api_infor_cell.src.Interfaces
         Task<ResponseApi<User?>> UpdateCodeAccessAsync(string userId, string codeAccess);
         Task<ResponseApi<User?>> UpdateAsync(User request);
         Task<ResponseApi<User?>> ValidatedAccessAsync(string codeAccess);
-        Task<ResponseApi<User>> DeleteAsync(string id);
+        Task<ResponseApi<User>> DeleteAsync(User user);
     }
 }

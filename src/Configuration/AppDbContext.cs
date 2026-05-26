@@ -1,6 +1,5 @@
 using api_infor_cell.src.Models;
 using MongoDB.Driver;
-using Twilio.TwiML.Voice;
 
 namespace api_infor_cell.src.Configuration
 {
@@ -20,8 +19,10 @@ namespace api_infor_cell.src.Configuration
                 {
                     mongoClientSettings.SslSettings = new SslSettings
                     {
-                        EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12
+                        EnabledSslProtocols = System.Security.Authentication.SslProtocols.Tls12,
+                        CheckCertificateRevocation = false
                     };
+                    mongoClientSettings.AllowInsecureTls = true;
                 }
                 
                 var mongoClient = new MongoClient(mongoClientSettings);
@@ -185,14 +186,27 @@ namespace api_infor_cell.src.Configuration
         {
             get { return Database.GetCollection<Subscription>("subscriptions"); }
         }
+        public IMongoCollection<SubscriptionInvoice> SubscriptionInvoices
+        {
+            get { return Database.GetCollection<SubscriptionInvoice>("subscription_invoices"); }
+        }
         #endregion
 
         #region FISCAL
+        public IMongoCollection<EcommerceConfig> EcommerceConfigs => Database.GetCollection<EcommerceConfig>("ecommerce_configs");
+        public IMongoCollection<EcommerceCustomer> EcommerceCustomers => Database.GetCollection<EcommerceCustomer>("ecommerce_customers");
+        public IMongoCollection<EcommerceOrder> EcommerceOrders => Database.GetCollection<EcommerceOrder>("ecommerce_orders");
+
         public IMongoCollection<FiscalDocument> FiscalDocuments => Database.GetCollection<FiscalDocument>("fiscal_documents");
 
         public IMongoCollection<FiscalEvent> FiscalEvents => Database.GetCollection<FiscalEvent>("fiscal_events");
 
         public IMongoCollection<FiscalConfig> FiscalConfigs => Database.GetCollection<FiscalConfig>("fiscal_configs");
+
+        #endregion
+
+        #region SETTING
+        public IMongoCollection<Template> Templates => Database.GetCollection<Template>("templates");
 
         #endregion
     }
