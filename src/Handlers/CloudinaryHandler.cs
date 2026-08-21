@@ -30,7 +30,7 @@ namespace api_infor_cell.src.Handlers
             var uploadParams = new RawUploadParams
             {
                 File = new FileDescription(fileName + extension, memoryStream),
-                Folder = $"projeto-modelo/{parent}",
+                Folder = $"telemovvi/{parent}",
                 PublicId = fileName
             };
 
