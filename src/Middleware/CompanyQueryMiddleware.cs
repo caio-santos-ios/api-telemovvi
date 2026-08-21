@@ -42,7 +42,7 @@ public class CompanyQueryMiddleware(RequestDelegate _next, ValidatorPlan validat
             string? plan = context.User.FindFirst("plan")?.Value;
             string? company = context.User.FindFirst("company")?.Value;
             string? store = context.User.FindFirst("store")?.Value;
-            string? typePlan = context.User.FindFirst("typePlan")?.Value;
+            string? typePlan = context.User.FindFirst("typePlan")?.Value ?? context.User.FindFirst("planType")?.Value;
             string? userId = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
             
             if(path.Contains("companies") || path.Contains("stores") || path.Contains("users")) 
