@@ -7,15 +7,16 @@ public class ValidatorPlan(AppDbContext context)
 {
     public async Task<ResponseApi<dynamic>> ValidatorConfigurationPlan(string planId, string planType, string collection)
     {
+        if (string.IsNullOrEmpty(planId)) return new(null, 200);
+
         string actualPlanType = planType;
-        if (!string.IsNullOrEmpty(planId))
+        var planDb = await context.Plans.Find(x => x.Id == planId).FirstOrDefaultAsync();
+        if (planDb != null && !string.IsNullOrEmpty(planDb.Type))
         {
-            var planDb = await context.Plans.Find(x => x.Id == planId).FirstOrDefaultAsync();
-            if (planDb != null && !string.IsNullOrEmpty(planDb.Type))
-            {
-                actualPlanType = planDb.Type;
-            }
+            actualPlanType = planDb.Type;
         }
+
+        if (IsUnlimitedPlan(actualPlanType)) return new(null, 200);
 
         if("companies".Equals(collection))
         {
@@ -42,88 +43,91 @@ public class ValidatorPlan(AppDbContext context)
     }
 
     #region FUNCTIONS
+    private static bool IsUnlimitedPlan(string? planType)
+    {
+        if (string.IsNullOrEmpty(planType)) return false;
+        string type = planType.ToLower().Trim();
+        return type == "platina" || type == "platinum" || type == "master" || type == "pro" || type == "unlimited" || type == "ilimitado";
+    }
+
     public static bool VerifyQuantityCompanies(string planType, long quantityCompanies)
     {
+        if (IsUnlimitedPlan(planType)) return true;
+
         switch(planType?.ToLower()?.Trim()) 
         {
             case "free":
-                if(quantityCompanies > 1) return false;
-                return true;
+                return quantityCompanies <= 1;
 
             case "bronze":
-                if(quantityCompanies > 3) return false;
-                return true;
+                return quantityCompanies <= 3;
 
             case "prata":
-                if(quantityCompanies > 4) return false;
-                return true;
+                return quantityCompanies <= 5;
                 
             case "ouro":
-                if(quantityCompanies > 5) return false;
-                return true;
+                return quantityCompanies <= 10;
 
             case "platina":
-                if(quantityCompanies > 6) return false;
+            case "platinum":
                 return true;
             
             default:
-                return false;
+                return true;
         }
     }
+
     public static bool VerifyQuantityStores(string planType, long quantityStores)
     {
+        if (IsUnlimitedPlan(planType)) return true;
+
         switch(planType?.ToLower()?.Trim()) 
         {
             case "free":
-                if(quantityStores > 1) return false;
-                return true;
+                return quantityStores <= 1;
 
             case "bronze":
-                if(quantityStores > 3) return false;
-                return true;
+                return quantityStores <= 5;
 
             case "prata":
-                if(quantityStores > 4) return false;
-                return true;
+                return quantityStores <= 10;
                 
             case "ouro":
-                if(quantityStores > 5) return false;
-                return true;
+                return quantityStores <= 20;
 
             case "platina":
-                if(quantityStores > 6) return false;
+            case "platinum":
                 return true;
             
             default:
-                return false;
+                return true;
         }
     }
+
     public static bool VerifyQuantityUsers(string planType, long quantityUsers)
     {
+        if (IsUnlimitedPlan(planType)) return true;
+
         switch(planType?.ToLower()?.Trim()) 
         {
             case "free":
-                if(quantityUsers > 1) return false;
-                return true;
+                return quantityUsers <= 2;
 
             case "bronze":
-                if(quantityUsers > 3) return false;
-                return true;
+                return quantityUsers <= 5;
 
             case "prata":
-                if(quantityUsers > 4) return false;
-                return true;
+                return quantityUsers <= 10;
                 
             case "ouro":
-                if(quantityUsers > 5) return false;
-                return true;
+                return quantityUsers <= 25;
 
             case "platina":
-                if(quantityUsers > 6) return false;
+            case "platinum":
                 return true;
             
             default:
-                return false;
+                return true;
         }
     }
     #endregion
