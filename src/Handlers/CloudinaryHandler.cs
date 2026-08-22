@@ -1,3 +1,4 @@
+using api_infor_cell.src.Shared.Utils;
 using CloudinaryDotNet;
 using CloudinaryDotNet.Actions;
 
@@ -8,34 +9,27 @@ namespace api_infor_cell.src.Handlers
         public async Task<string> UploadAttachment(string parent, IFormFile attachment)
         {
             string extension = Path.GetExtension(attachment.FileName).ToLower();
-            // bool isHeic = extension == ".heic" || extension == ".heif";
+            bool isHeic = extension == ".heic" || extension == ".heif";
             string fileName = Guid.NewGuid().ToString();
 
             using var memoryStream = new MemoryStream();
 
-            // if (isHeic)
-            // {
-            //     using var inputStream = attachment.OpenReadStream();
-            //     using var image = await Image.LoadAsync(inputStream);
-            //     await image.SaveAsJpegAsync(memoryStream);
-            //     memoryStream.Position = 0;
-            //     extension = ".jpg";
-            // }
-            // else
-            // {
-            // }
+            if (isHeic)
+            {
+                extension = ".jpg";
+            }
+
             await attachment.CopyToAsync(memoryStream);
             memoryStream.Position = 0;
 
-            var uploadParams = new RawUploadParams
+            RawUploadParams uploadParams = new()
             {
                 File = new FileDescription(fileName + extension, memoryStream),
                 Folder = $"projeto-modelo/{parent}",
                 PublicId = fileName
             };
 
-            var result = await cloudinary.UploadAsync(uploadParams);
-
+            RawUploadResult result = await cloudinary.UploadAsync(uploadParams);
             return result.SecureUrl.ToString();
         }
         

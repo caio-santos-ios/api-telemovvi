@@ -19,9 +19,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(serviceOrders.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -33,9 +33,9 @@ namespace api_infor_cell.src.Services
                 if (serviceOrder.Data is null) return new(null, 404, "Ordem de Serviço não encontrada");
                 return new(serviceOrder.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -46,9 +46,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic?> result = await repository.CheckWarrantyAsync(customerId, serialImei);
                 return new(result.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -93,9 +93,9 @@ namespace api_infor_cell.src.Services
                 if (response.Data is null) return new(null, 400, "Falha ao criar Ordem de Serviço.");
                 return new(response.Data, 201, "Ordem de Serviço criada com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -141,9 +141,9 @@ namespace api_infor_cell.src.Services
                 if (!response.IsSuccess) return new(null, 400, "Falha ao atualizar Ordem de Serviço.");
                 return new(null, 200, "Ordem de Serviço atualizada com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -213,9 +213,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 200, "Ordem de Serviço encerrada com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -229,9 +229,9 @@ namespace api_infor_cell.src.Services
                 if (!serviceOrder.IsSuccess) return new(null, 400, serviceOrder.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion

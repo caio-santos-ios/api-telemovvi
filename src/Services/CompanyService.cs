@@ -10,10 +10,10 @@ using AutoMapper;
 namespace api_infor_cell.src.Services
 {
     public class CompanyService(
-        ICompanyRepository repository, 
+        ICompanyRepository repository,
         IStoreRepository storeRepository,
-        IUserRepository userRepository, 
-        CloudinaryHandler cloudinaryHandler, 
+        IUserRepository userRepository,
+        CloudinaryHandler cloudinaryHandler,
         IMapper _mapper
     ) : ICompanyService
     {
@@ -27,9 +27,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(companies.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+            catch (Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<List<dynamic>>> GetSelectAsync(GetAllDTO request)
@@ -40,26 +40,26 @@ namespace api_infor_cell.src.Services
                 ResponseApi<List<dynamic>> companies = await repository.GetSelectAsync(pagination);
                 return new(companies.Data);
             }
-            catch
+            catch (Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
-        }  
+        }
         public async Task<ResponseApi<dynamic?>> GetByIdAggregateAsync(string id)
         {
             try
             {
                 ResponseApi<dynamic?> company = await repository.GetByIdAggregateAsync(id);
-                if(company.Data is null) return new(null, 404, "Empresa não encontrada");
+                if (company.Data is null) return new(null, 404, "Empresa não encontrada");
                 return new(company.Data);
             }
-            catch
+            catch (Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
-        
+
         #region CREATE
         public async Task<ResponseApi<Company?>> CreateAsync(CreateCompanyDTO request)
         {
@@ -68,13 +68,13 @@ namespace api_infor_cell.src.Services
                 Company company = _mapper.Map<Company>(request);
 
                 ResponseApi<Company?> companyExisted = await repository.GetByPlanDocumentAsync(request.Plan, request.Document, "");
-                if(companyExisted.Data is not null) return new(null, 400, "CNPJ já cadastrado.");
+                if (companyExisted.Data is not null) return new(null, 400, "CNPJ já cadastrado.");
 
                 ResponseApi<Company?> response = await repository.CreateAsync(company);
 
-                if(response.Data is null) return new(null, 400, "Falha ao criar Empresa.");
+                if (response.Data is null) return new(null, 400, "Falha ao criar Empresa.");
 
-                ResponseApi<Store?> responseStore = await storeRepository.CreateAsync(new ()
+                ResponseApi<Store?> responseStore = await storeRepository.CreateAsync(new()
                 {
                     Plan = response.Data.Plan,
                     Company = response.Data.Id,
@@ -93,7 +93,7 @@ namespace api_infor_cell.src.Services
 
                 ResponseApi<User?> user = await userRepository.GetBySubscribedAsync(request.Plan);
 
-                if(user.Data is not null && responseStore.Data is not null)
+                if (user.Data is not null && responseStore.Data is not null)
                 {
                     user.Data.Companies.Add(company.Id);
                     user.Data.Stores.Add(responseStore.Data.Id);
@@ -104,44 +104,44 @@ namespace api_infor_cell.src.Services
                 return new(response.Data, 201, "Empresa criada com sucesso.");
             }
             catch
-            { 
+            {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde");
             }
         }
         #endregion
-        
+
         #region UPDATE
         public async Task<ResponseApi<Company?>> UpdateAsync(UpdateCompanyDTO request)
         {
             try
             {
-                if(string.IsNullOrEmpty(request.CorporateName)) return  new(null, 400, "Razão social é obrigatório.");
-                if(string.IsNullOrEmpty(request.TradeName)) return  new(null, 400, "Nome fantasia é obrigatório.");
-                if(string.IsNullOrEmpty(request.Document)) return  new(null, 400, "CNPJ é obrigatório.");
-                if(string.IsNullOrEmpty(request.Email)) return  new(null, 400, "CNPJ é obrigatório.");
-                if(!Validator.IsEmail(request.Email)) return new(null, 400, "E-mail inválido.");
-                if(string.IsNullOrEmpty(request.Phone)) return  new(null, 400, "Telefone obrigatório.");
-                if(string.IsNullOrEmpty(request.StateRegistration)) return  new(null, 400, "Incrição estadual obrigatório.");
-                if(string.IsNullOrEmpty(request.MunicipalRegistration)) return  new(null, 400, "Incrição municipal obrigatório.");
+                if (string.IsNullOrEmpty(request.CorporateName)) return new(null, 400, "Razão social é obrigatório.");
+                if (string.IsNullOrEmpty(request.TradeName)) return new(null, 400, "Nome fantasia é obrigatório.");
+                if (string.IsNullOrEmpty(request.Document)) return new(null, 400, "CNPJ é obrigatório.");
+                if (string.IsNullOrEmpty(request.Email)) return new(null, 400, "CNPJ é obrigatório.");
+                if (!Validator.IsEmail(request.Email)) return new(null, 400, "E-mail inválido.");
+                if (string.IsNullOrEmpty(request.Phone)) return new(null, 400, "Telefone obrigatório.");
+                if (string.IsNullOrEmpty(request.StateRegistration)) return new(null, 400, "Incrição estadual obrigatório.");
+                if (string.IsNullOrEmpty(request.MunicipalRegistration)) return new(null, 400, "Incrição municipal obrigatório.");
 
 
                 ResponseApi<Company?> companyResponse = await repository.GetByIdAsync(request.Id);
-                if(companyResponse.Data is null) return new(null, 404, "Falha ao atualizar");
+                if (companyResponse.Data is null) return new(null, 404, "Falha ao atualizar");
 
                 ResponseApi<Company?> companyExisted = await repository.GetByPlanDocumentAsync(request.Plan, request.Document, request.Id);
-                if(companyExisted.Data is not null) return new(null, 400, "CNPJ já cadastrado.");
-                
+                if (companyExisted.Data is not null) return new(null, 400, "CNPJ já cadastrado.");
+
                 Company company = _mapper.Map<Company>(request);
                 company.UpdatedAt = DateTime.UtcNow;
                 company.CreatedAt = companyResponse.Data.CreatedAt;
 
                 ResponseApi<Company?> response = await repository.UpdateAsync(company);
-                if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
+                if (!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Empresa atualizada com sucesso");
             }
-            catch
+            catch (Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Company?>> SavePhotoProfileAsync(SaveCompanyPhotoDTO request)
@@ -151,7 +151,7 @@ namespace api_infor_cell.src.Services
                 if (request.Photo == null || request.Photo.Length == 0) return new(null, 400, "Falha ao salvar foto de perfil");
 
                 ResponseApi<Company?> user = await repository.GetByIdAsync(request.Id);
-                if(user.Data is null) return new(null, 404, "Falha ao salvar foto de perfil");
+                if (user.Data is null) return new(null, 404, "Falha ao salvar foto de perfil");
 
                 var tempPath = Path.GetTempFileName();
 
@@ -165,36 +165,36 @@ namespace api_infor_cell.src.Services
                 user.Data.Photo = uriPhoto;
 
                 ResponseApi<Company?> response = await repository.UpdateAsync(user.Data);
-                if(!response.IsSuccess) return new(null, 400, "Falha ao salvar logo");
-                return new(new () { Photo = response.Data!.Photo }, 201, "Logo salvo com sucesso");
+                if (!response.IsSuccess) return new(null, 400, "Falha ao salvar logo");
+                return new(new() { Photo = response.Data!.Photo }, 201, "Logo salvo com sucesso");
             }
-            catch
+            catch (Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
-        
+
         #region DELETE
         public async Task<ResponseApi<Company>> DeleteAsync(string id, string plan)
         {
             try
             {
                 ResponseApi<List<Company>> companies = await repository.GetTotalCompanies(plan);
-                if(companies.Data is null) return new(null, 400, "O sistema deve possuir ao menos uma empresa cadastrada.");
-                if(companies.Data.Count == 1) return new(null, 400, "O sistema deve possuir ao menos uma empresa cadastrada.");
+                if (companies.Data is null) return new(null, 400, "O sistema deve possuir ao menos uma empresa cadastrada.");
+                if (companies.Data.Count == 1) return new(null, 400, "O sistema deve possuir ao menos uma empresa cadastrada.");
 
                 ResponseApi<Company> company = await repository.DeleteAsync(id);
-                if(!company.IsSuccess) return new(null, 400, company.Message);
+                if (!company.IsSuccess) return new(null, 400, company.Message);
 
                 ResponseApi<User?> user = await userRepository.GetByCompanyIdAsync(id);
-                if(user.Data is not null) return new(null, 400, "Não é possível excluir a empresa, pois existem usuários vinculados a ela.");
+                if (user.Data is not null) return new(null, 400, "Não é possível excluir a empresa, pois existem usuários vinculados a ela.");
 
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+            catch (Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion 

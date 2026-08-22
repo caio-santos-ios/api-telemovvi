@@ -19,9 +19,9 @@ namespace api_infor_cell.src.Services
                 int count = await genericTableRepository.GetCountDocumentsAsync(pagination);
                 return new(genericTables.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetByIdAggregateAsync(string id)
@@ -32,9 +32,9 @@ namespace api_infor_cell.src.Services
                 if(genericTable.Data is null) return new(null, 404, "Tabela Genérica não encontrado");
                 return new(genericTable.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<List<dynamic>>> GetByTableAggregateAsync(string table)
@@ -44,9 +44,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<List<dynamic>> genericTable = await genericTableRepository.GetByTableAggregateAsync(table);
                 return new(genericTable.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -95,9 +95,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Atualizado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion       
@@ -110,9 +110,9 @@ namespace api_infor_cell.src.Services
                 if(!genericTable.IsSuccess) return new(null, 400, genericTable.Message);
                 return new(null, 204, "Excluído com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<GenericTable>> DeleteByTableAsync(string table)
@@ -123,9 +123,9 @@ namespace api_infor_cell.src.Services
                 if(!genericTable.IsSuccess) return new(null, 400, genericTable.Message);
                 return new(null, 204, "Excluído com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion        

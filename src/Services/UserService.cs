@@ -166,9 +166,9 @@ namespace api_infor_cell.src.Services
                 int count = await userRepository.GetCountDocumentsAsync(pagination);
                 return new(users.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<PaginationApi<List<dynamic>>> GetEmployeeAllAsync(GetAllDTO request)
@@ -180,9 +180,9 @@ namespace api_infor_cell.src.Services
                 int count = await userRepository.GetCountDocumentsAsync(pagination);
                 return new(users.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetByIdAggregateAsync(string id)
@@ -193,9 +193,9 @@ namespace api_infor_cell.src.Services
                 if(user.Data is null) return new(null, 404, "Usuário não encontrado");
                 return new(user.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetEmployeeByIdAggregateAsync(string id)
@@ -206,9 +206,9 @@ namespace api_infor_cell.src.Services
                 if(user.Data is null) return new(null, 404, "Usuário não encontrado");
                 return new(user.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetLoggedAsync(string id)
@@ -219,9 +219,9 @@ namespace api_infor_cell.src.Services
                 if(user.Data is null) return new(null, 404, "Usuário não encontrado");
                 return new(user.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<List<dynamic>>> GetSelectBarberAsync(GetAllDTO request)
@@ -231,9 +231,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<List<dynamic>> users = await userRepository.GetSelectBarberAsync(new(request.QueryParams));
                 return new(users.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -247,9 +247,9 @@ namespace api_infor_cell.src.Services
                 if(!user.IsSuccess) return new(null, 400, "Código inválido");
                 return new(user.Data, 201, "Código de acesso confirmado");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User?>> UpdateAsync(UpdateUserDTO request)
@@ -271,9 +271,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Atualizado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User?>> UpdateModuleAsync(UpdateUserModuleDTO request)
@@ -323,9 +323,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Atualizado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User?>> UpdateStoreAsync(UpdateUserDTO request)
@@ -342,9 +342,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Atualizado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User?>> ResendCodeAccessAsync(UpdateUserDTO request)
@@ -385,9 +385,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao reenviar código de acesso");
                 return new(response.Data, 201, "Novo código de acesso enviado");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User?>> SavePhotoProfileAsync(SaveUserPhotoDTO request)
@@ -414,9 +414,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao salvar foto de perfil");
                 return new(new () { Photo = response.Data!.Photo }, 201, "Foto de perfil salva com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User?>> RemovePhotoProfileAsync(string id)
@@ -437,9 +437,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao remover foto de perfil");
                 return new(response.Data, 201, "Foto de perfil removida com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -459,9 +459,9 @@ namespace api_infor_cell.src.Services
                 
                 return new(user.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion        

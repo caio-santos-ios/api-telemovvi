@@ -86,9 +86,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic>> RegisterAsync(RegisterDTO request)
@@ -194,9 +194,9 @@ namespace api_infor_cell.src.Services
 
                 return new(null, 201, "Conta criada com sucesso, foi enviado o e-mail de confirmação.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic>> ConfirmAccountAsync(ConfirmAccountDTO request)
@@ -219,9 +219,9 @@ namespace api_infor_cell.src.Services
 
                 return new(null, 200, "Conta verificada com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic>> NewCodeConfirmAsync(NewCodeConfirmDTO request)
@@ -245,9 +245,9 @@ namespace api_infor_cell.src.Services
 
                 return new(null, 200, "Novo código foi enviado.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<AuthResponse>> RefreshTokenAsync(string token, string planId)
@@ -297,9 +297,9 @@ namespace api_infor_cell.src.Services
                     RefreshToken = refreshToken
                 });
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User>> ResetPasswordAsync(ResetPasswordDTO request)
@@ -326,9 +326,9 @@ namespace api_infor_cell.src.Services
 
                 return new(null, 200, "Senha alterada com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User>> RequestForgotPasswordAsync(ForgotPasswordDTO request)
@@ -352,9 +352,9 @@ namespace api_infor_cell.src.Services
 
                 return new(null, 200, "Foi enviado um e-mail para redefinir sua senha");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<User>> ResetPassordForgotAsync(ResetPasswordDTO request)
@@ -382,9 +382,9 @@ namespace api_infor_cell.src.Services
 
                 return new(null, 200, "Senha alterada com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<AuthResponse>> SelectCompanyTokenAsync(SelectCompanyTokenDTO request)
@@ -433,9 +433,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response, 200, "Empresa alterada com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 

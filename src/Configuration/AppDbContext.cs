@@ -152,10 +152,6 @@ namespace api_infor_cell.src.Configuration
         {
             get { return Database.GetCollection<Adjustment>("adjustments"); }
         }  
-        public IMongoCollection<LogApi> LogApis
-        {
-            get { return Database.GetCollection<LogApi>("logs"); }
-        }       
         public IMongoCollection<Situation> Situations
         {
             get { return Database.GetCollection<Situation>("situations"); }
@@ -207,7 +203,7 @@ namespace api_infor_cell.src.Configuration
 
         #region SETTING
         public IMongoCollection<Template> Templates => Database.GetCollection<Template>("templates");
-
+        public IMongoCollection<LogApi> ApiLogs => Database.GetCollection<LogApi>("api_logs");
         #endregion
     }
 }

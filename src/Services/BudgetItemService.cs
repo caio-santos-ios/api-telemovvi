@@ -22,9 +22,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(budgetItems.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -36,9 +36,9 @@ namespace api_infor_cell.src.Services
                 if (budgetItem.Data is null) return new(null, 404, "Item do Orçamento não encontrado");
                 return new(budgetItem.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -72,9 +72,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Item adicionado ao Orçamento com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -122,9 +122,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Item do Orçamento atualizado com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -137,9 +137,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<BudgetItem> response = await repository.DeleteAsync(id);
                 return response;
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion

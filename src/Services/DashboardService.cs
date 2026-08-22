@@ -12,9 +12,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic> obj = await dashboardRepository.GetCardsAsync(plan, company, store);
                 return new(obj.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -25,9 +25,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic> obj = await dashboardRepository.GetMonthlySalesAsync(plan, company, store);
                 return new(obj.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -38,9 +38,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic> obj = await dashboardRepository.GetMonthlyTargetAsync(plan, company, store);
                 return new(obj.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -51,9 +51,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic> obj = await dashboardRepository.GetRecentOrdersAsync(plan, company, store);
                 return new(obj.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
     }

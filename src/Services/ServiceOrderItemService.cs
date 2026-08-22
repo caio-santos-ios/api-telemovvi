@@ -20,9 +20,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(ServiceOrderItems.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         
@@ -34,9 +34,9 @@ namespace api_infor_cell.src.Services
                 if(ServiceOrderItem.Data is null) return new(null, 404, "Loja não encontrada");
                 return new(ServiceOrderItem.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -109,9 +109,9 @@ namespace api_infor_cell.src.Services
                 if (!response.IsSuccess) return new(null, 400, "Falha ao atualizar item");
                 return new(response.Data, 200, "Item atualizado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -124,9 +124,9 @@ namespace api_infor_cell.src.Services
                 if(!ServiceOrderItem.IsSuccess) return new(null, 400, ServiceOrderItem.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion 

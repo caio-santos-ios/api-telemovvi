@@ -38,7 +38,7 @@ namespace api_infor_cell.src.Repository
                     new("$sort", pagination.PipelineSort),
                 };
 
-                List<BsonDocument> results = await context.LogApis.Aggregate<BsonDocument>(pipeline).ToListAsync();
+                List<BsonDocument> results = await context.ApiLogs.Aggregate<BsonDocument>(pipeline).ToListAsync();
                 List<dynamic> list = results.Select(doc => BsonSerializer.Deserialize<dynamic>(doc)).ToList();
                 return new(list);
             }
@@ -53,7 +53,7 @@ namespace api_infor_cell.src.Repository
         {
             try
             {
-                await context.LogApis.InsertOneAsync(logApi);
+                await context.ApiLogs.InsertOneAsync(logApi);
 
                 return new(logApi, 201, "Log criada com sucesso");
             }

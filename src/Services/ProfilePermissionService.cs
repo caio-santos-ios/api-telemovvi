@@ -19,9 +19,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(ProfilePermissions.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetLoggedAsync(string id)
@@ -32,9 +32,9 @@ namespace api_infor_cell.src.Services
                 if(user.Data is null) return new(null, 404, "Usuário não encontrado");
                 return new(user.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetByIdAggregateAsync(string id)
@@ -45,9 +45,9 @@ namespace api_infor_cell.src.Services
                 if(ProfilePermission.Data is null) return new(null, 404, "Perfil de Usuário não encontrada");
                 return new(ProfilePermission.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<List<dynamic>>> GetSelectAsync(GetAllDTO request)
@@ -58,9 +58,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<List<dynamic>> profilePermissions = await repository.GetSelectAsync(pagination);
                 return new(profilePermissions.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         } 
         #endregion
@@ -104,9 +104,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Atualizada com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -120,9 +120,9 @@ namespace api_infor_cell.src.Services
                 if(!ProfilePermission.IsSuccess) return new(null, 400, ProfilePermission.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion 

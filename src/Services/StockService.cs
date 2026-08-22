@@ -20,9 +20,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(Stocks.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<List<dynamic>>> GetByProductIdAggregationAsync(string plan, string company, string productId)
@@ -32,9 +32,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<List<dynamic>> Stocks = await repository.GetByProductIdAggregationAsync(plan, company, productId);
                 return new(Stocks.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<dynamic?>> GetByIdAggregateAsync(string id)
@@ -45,9 +45,9 @@ namespace api_infor_cell.src.Services
                 if(Stock.Data is null) return new(null, 404, "Estoque não encontrada");
                 return new(Stock.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -77,19 +77,19 @@ namespace api_infor_cell.src.Services
 
                 if(response.Data is null) return new(null, 400, "Falha ao criar Estoque.");
 
-                await logApiRepository.CreateAsync(new ()
-                {
-                    Plan = request.Plan,
-                    Company = request.Company,
-                    Store = request.Store,
-                    CreatedBy = request.CreatedBy,
-                    Description = request.OriginDescription,
-                    OriginId = stock.Id,
-                    OriginSecondaryId = stock.ProductId,
-                    ResponseMessage = "Estoque movimentado",
-                    Response = "success",
-                    Table = "stock"
-                });
+                // await logApiRepository.CreateAsync(new ()
+                // {
+                //     Plan = request.Plan,
+                //     Company = request.Company,
+                //     Store = request.Store,
+                //     CreatedBy = request.CreatedBy,
+                //     Description = request.OriginDescription,
+                //     OriginId = stock.Id,
+                //     OriginSecondaryId = stock.ProductId,
+                //     ResponseMessage = "Estoque movimentado",
+                //     Response = "success",
+                //     Table = "stock"
+                // });
 
                 return new(response.Data, 201, "Estoque criada com sucesso.");
             }
@@ -115,9 +115,9 @@ namespace api_infor_cell.src.Services
                 if(!response.IsSuccess) return new(null, 400, "Falha ao atualizar");
                 return new(response.Data, 201, "Atualizado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -133,9 +133,9 @@ namespace api_infor_cell.src.Services
                 if(!stock.IsSuccess) return new(null, 400, stock.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Stock>> DeleteAsync(string id)
@@ -146,9 +146,9 @@ namespace api_infor_cell.src.Services
                 if(!Stock.IsSuccess) return new(null, 400, Stock.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion 

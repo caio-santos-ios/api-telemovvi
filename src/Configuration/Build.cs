@@ -1,6 +1,7 @@
 using System.Text;
 using api_infor_cell.src.Handlers;
 using api_infor_cell.src.Interfaces;
+using api_infor_cell.src.Middleware;
 using api_infor_cell.src.Repository;
 using api_infor_cell.src.Services;
 using api_infor_cell.src.Shared.Templates;
@@ -185,6 +186,8 @@ namespace api_infor_cell.src.Configuration
                 Environment.GetEnvironmentVariable("CLOUDINARY_API_SECRET")
             );
             builder.Services.AddSingleton(new Cloudinary(account));
+
+            builder.Services.AddScoped<ApiLoggerMiddleware>();
         }
     }
 }

@@ -159,9 +159,9 @@ namespace api_infor_cell.src.Services
 
                 return result;
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Subscription?>> GetCurrentSubscriptionAsync(string plan)

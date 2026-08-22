@@ -10,23 +10,22 @@ namespace api_infor_cell.src.Models
         [BsonRepresentation(BsonType.ObjectId)]
         public string Id { get; set; } = string.Empty;
         
-        [BsonElement("table")]
-        public string Table { get; set; } = string.Empty;
+        [BsonElement("collection")]
+        public string Collection { get; set; } = string.Empty;
         
-        [BsonElement("originId")]
-        public string OriginId { get; set; } = string.Empty;
+        [BsonElement("message")]
+        public string Message { get; set; } = string.Empty;
         
-        [BsonElement("originSecondaryId")]
-        public string OriginSecondaryId { get; set; } = string.Empty;
-
-        [BsonElement("description")]
-        public string Description { get; set; } = string.Empty;
+        [BsonElement("status")]
+        public int Status { get; set; }
         
-        [BsonElement("response")]
-        public string Response { get; set; } = string.Empty;
+        [BsonElement("time")]
+        public double Time { get; set; }
         
-        [BsonElement("responseMessage")]
-        public string ResponseMessage { get; set; } = string.Empty;
+        [BsonElement("path")]
+        public string Path { get; set; } = string.Empty;
         
+        [BsonElement("method")]
+        public string Method { get; set; } = string.Empty;
     }
 }

@@ -20,9 +20,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(Boxs.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         
@@ -34,9 +34,9 @@ namespace api_infor_cell.src.Services
                 if(Box.Data is null) return new(null, 404, "Caixa não encontrada");
                 return new(Box.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -47,9 +47,9 @@ namespace api_infor_cell.src.Services
                 ResponseApi<dynamic?> Box = await repository.GetByCreatedIdAggregateAsync(createdBy);
                 return new(Box.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -92,9 +92,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Atualizada com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Box?>> UpdateCloseAsync(UpdateBoxDTO request)
@@ -126,9 +126,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Caixa fechado e aberto com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Box?>> UpdateSangriaAsync(UpdateBoxDTO request)
@@ -148,9 +148,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Sanfria feita com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Box?>> UpdateReinforceAsync(UpdateBoxDTO request)
@@ -170,9 +170,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Reforço feito com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         public async Task<ResponseApi<Box?>> UpdateClosingAsync(UpdateBoxDTO request)
@@ -192,9 +192,9 @@ namespace api_infor_cell.src.Services
 
                 return new(response.Data, 201, "Caixa fechado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -209,9 +209,9 @@ namespace api_infor_cell.src.Services
                 if(!Box.IsSuccess) return new(null, 400, Box.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion 

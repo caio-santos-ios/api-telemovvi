@@ -19,9 +19,9 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(accountsReceivable.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -33,9 +33,9 @@ namespace api_infor_cell.src.Services
                 if (accountReceivable.Data is null) return new(null, 404, "Conta a receber não encontrada");
                 return new(accountReceivable.Data);
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -63,9 +63,9 @@ namespace api_infor_cell.src.Services
                 if (response.Data is null) return new(null, 400, "Falha ao criar conta a receber.");
                 return new(response.Data, 201, "Conta a receber criada com sucesso.");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -91,9 +91,9 @@ namespace api_infor_cell.src.Services
                 if (!response.IsSuccess) return new(null, 400, "Falha ao atualizar conta a receber");
                 return new(response.Data, 200, "Conta a receber atualizada com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
 
@@ -123,9 +123,9 @@ namespace api_infor_cell.src.Services
                 if (!response.IsSuccess) return new(null, 400, "Falha ao baixar título");
                 return new(response.Data, 200, "Título baixado com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
@@ -139,9 +139,9 @@ namespace api_infor_cell.src.Services
                 if (!response.IsSuccess) return new(null, 400, response.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-            catch
+catch(Exception ex)
             {
-                return new(null, 500, "Ocorreu um erro inesperado. Por favor, tente novamente mais tarde.");
+                return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
         }
         #endregion
