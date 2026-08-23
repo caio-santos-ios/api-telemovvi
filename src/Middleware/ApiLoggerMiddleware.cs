@@ -12,7 +12,6 @@ namespace api_infor_cell.src.Middleware
         [
             "/api/loggers",
             "/api/check",
-            "/api/auth/login",
             "/api/auth/register",
             "/api/notifications/send"
         ];
