@@ -119,11 +119,11 @@ namespace api_infor_cell.src.Services
                             Store = purchaseOrderResponse.Data.Store,
                             Plan = purchaseOrderResponse.Data.Plan,
                             OriginDescription = $"Pedido de Compra - Nº {purchaseOrderResponse.Data.Code}",
-                            Origin = "sales-order-item",
+                            Origin = "purchase-order-item",
                             ForSale = "yes",
                             OriginId = item.Id,
-                            HasProductSerial = request.HasProductSerial,
-                            HasProductVariations = request.HasProductVariations,
+                            HasProductSerial = item.Variations.Any(v => v.Serials != null && v.Serials.Count > 0) ? "yes" : "no",
+                            HasProductVariations = item.Variations.Count > 0 ? "yes" : "no",
                         };
 
                         await stockService.CreateAsync(stock);

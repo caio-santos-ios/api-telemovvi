@@ -137,6 +137,8 @@ namespace api_infor_cell.src.Configuration
             builder.Services.AddTransient<IBudgetRepository, BudgetRepository>();
             builder.Services.AddTransient<IBudgetItemService, BudgetItemService>();
             builder.Services.AddTransient<IBudgetItemRepository, BudgetItemRepository>();
+            builder.Services.AddTransient<ISerialNumberService, SerialNumberService>();
+            builder.Services.AddTransient<ISerialNumberRepository, SerialNumberRepository>();
 
             // FINANCIAL
             builder.Services.AddTransient<IAccountReceivableService, AccountReceivableService>();

@@ -204,6 +204,7 @@ namespace api_infor_cell.src.Configuration
         #region SETTING
         public IMongoCollection<Template> Templates => Database.GetCollection<Template>("templates");
         public IMongoCollection<LogApi> ApiLogs => Database.GetCollection<LogApi>("api_logs");
+        public IMongoCollection<SerialNumber> SerialNumbers => Database.GetCollection<SerialNumber>("serial_numbers");
         #endregion
     }
 }

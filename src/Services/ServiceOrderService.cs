@@ -19,7 +19,7 @@ namespace api_infor_cell.src.Services
                 int count = await repository.GetCountDocumentsAsync(pagination);
                 return new(serviceOrders.Data, count, pagination.PageNumber, pagination.PageSize);
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
@@ -33,7 +33,7 @@ catch(Exception ex)
                 if (serviceOrder.Data is null) return new(null, 404, "Ordem de Serviço não encontrada");
                 return new(serviceOrder.Data);
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
@@ -46,7 +46,7 @@ catch(Exception ex)
                 ResponseApi<dynamic?> result = await repository.CheckWarrantyAsync(customerId, serialImei);
                 return new(result.Data);
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
@@ -61,7 +61,7 @@ catch(Exception ex)
                 ResponseApi<long> code = await repository.GetNextCodeAsync(request.Plan, request.Company, request.Store);
 
                 ResponseApi<Situation?> situation = await situationRepository.GetByMomentAsync(request.Plan, request.Company, request.Store, "start");
-                
+
                 ServiceOrder serviceOrder = _mapper.Map<ServiceOrder>(request);
                 serviceOrder.Status = situation.Data is not null ? situation.Data.Id : "";
                 serviceOrder.OpenedAt = DateTime.UtcNow;
@@ -93,7 +93,7 @@ catch(Exception ex)
                 if (response.Data is null) return new(null, 400, "Falha ao criar Ordem de Serviço.");
                 return new(response.Data, 201, "Ordem de Serviço criada com sucesso.");
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
@@ -141,7 +141,7 @@ catch(Exception ex)
                 if (!response.IsSuccess) return new(null, 400, "Falha ao atualizar Ordem de Serviço.");
                 return new(null, 200, "Ordem de Serviço atualizada com sucesso.");
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
@@ -154,6 +154,8 @@ catch(Exception ex)
                 ResponseApi<ServiceOrder?> existing = await repository.GetByIdAsync(request.Id);
                 if (existing.Data is null) return new(null, 404, "Ordem de Serviço não encontrada");
 
+                ResponseApi<Situation?> situation = await situationRepository.GetByMomentAsync(request.Plan, request.Company, request.Store, "end");
+
                 ServiceOrder serviceOrder = existing.Data;
                 serviceOrder.IsClosed = true;
                 serviceOrder.ClosedAt = DateTime.UtcNow;
@@ -162,6 +164,7 @@ catch(Exception ex)
                 serviceOrder.WarrantyUntil = request.WarrantyUntil ?? DateTime.UtcNow.AddDays(request.WarrantyDays);
                 serviceOrder.UpdatedAt = DateTime.UtcNow;
                 serviceOrder.UpdatedBy = request.UpdatedBy;
+                serviceOrder.Status = situation.Data is not null ? situation.Data.Id : "";
 
                 if (!serviceOrder.IsWarrantyInternal && !string.IsNullOrEmpty(request.PaymentMethodId))
                 {
@@ -177,10 +180,9 @@ catch(Exception ex)
                 ResponseApi<ServiceOrder?> response = await repository.UpdateAsync(serviceOrder);
                 if (!response.IsSuccess) return new(null, 400, "Falha ao encerrar Ordem de Serviço.");
 
-                ResponseApi<Situation?> situation = await situationRepository.GetByIdAsync(serviceOrder.Status);
-                if(situation.Data is not null)
+                if (situation.Data is not null)
                 {
-                    if(situation.Data.GenerateFinancial && !serviceOrder.IsWarrantyInternal && !string.IsNullOrEmpty(request.PaymentMethodId))
+                    if (situation.Data.GenerateFinancial && !serviceOrder.IsWarrantyInternal && !string.IsNullOrEmpty(request.PaymentMethodId))
                     {
                         DateTime issueDate = DateTime.UtcNow;
 
@@ -213,7 +215,7 @@ catch(Exception ex)
 
                 return new(response.Data, 200, "Ordem de Serviço encerrada com sucesso.");
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }
@@ -229,7 +231,7 @@ catch(Exception ex)
                 if (!serviceOrder.IsSuccess) return new(null, 400, serviceOrder.Message);
                 return new(null, 204, "Excluída com sucesso");
             }
-catch(Exception ex)
+            catch (Exception ex)
             {
                 return new(null, 500, $"Ocorreu um erro inesperado. Por favor, tente novamente mais tarde. {ex.Message}");
             }

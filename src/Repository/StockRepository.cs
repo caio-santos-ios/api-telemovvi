@@ -31,7 +31,12 @@ namespace api_infor_cell.src.Repository
                     },
 
                     { "quantity", new BsonDocument("$sum", new BsonDocument("$toDouble", "$quantity")) },
-                    { "quantityAvailable", new BsonDocument("$sum", new BsonDocument("$toDouble", "$quantityAvailable")) },
+                    { "quantityAvailable", new BsonDocument("$sum", new BsonDocument("$min", new BsonArray 
+                        { 
+                            new BsonDocument("$toDouble", "$quantity"), 
+                            new BsonDocument("$toDouble", "$quantityAvailable") 
+                        })) 
+                    },
                     { "cost", new BsonDocument("$sum", new BsonDocument("$toDouble", "$cost")) },
                     { "createdAt", MongoUtil.First("createdAt") },
                     { "store", MongoUtil.First("store") },

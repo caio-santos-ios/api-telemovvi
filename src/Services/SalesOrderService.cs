@@ -140,46 +140,84 @@ catch(Exception ex)
                     {
                         ResponseApi<Product?> product = await productRepository.GetByIdAsync(salesOrderItem.ProductId);
                         if(product.Data is null) return new(null, 404, "Algum dos Produtos não tem estoque disponível");
-                        
-                        if(product.Data.HasVariations == "yes")
+                                              if(product.Data.HasVariations == "yes")
                         {
-                            ResponseApi<Stock?> stock = await stockRepository.GetVerifyStock(salesOrderItem.ProductId, salesOrderItem.Plan, salesOrderItem.Company, salesOrderItem.Store);
-                            
-                            if(stock.Data is null) return new(null, 404, $"O Produto [{product.Data.Code} - {product.Data.Name}] não tem estoque disponível");
+                            ResponseApi<List<Stock>> stocks = await stockRepository.GetVerifyStockAll(salesOrderItem.ProductId, salesOrderItem.Plan, salesOrderItem.Company, salesOrderItem.Store);
+                            if(stocks.Data is null || stocks.Data.Count == 0) return new(null, 404, $"O Produto [{product.Data.Code} - {product.Data.Name}] não tem estoque disponível");
+
                             if(product.Data.HasSerial == "yes")
                             {
                                 bool hasStockAvailable = false;
-                                foreach (var variation in stock.Data.Variations)
+
+                                foreach (Stock stock in stocks.Data)
                                 {
-                                    VariationItemSerial? serial = variation.Serials.Where(s => s.Code == salesOrderItem.Serial && s.HasAvailable).FirstOrDefault();
-                                    if(serial is not null) 
+                                    if (stock.Variations is null) continue;
+
+                                    foreach (var variation in stock.Variations)
                                     {
-                                        serial.HasAvailable = false;
-                                        hasStockAvailable = true;
-                                    };
-                                };
+                                        if (variation.Serials is null) continue;
+
+                                        VariationItemSerial? serial = variation.Serials.FirstOrDefault(s => s.Code == salesOrderItem.Serial && s.HasAvailable);
+                                        if(serial is not null) 
+                                        {
+                                            serial.HasAvailable = false;
+                                            hasStockAvailable = true;
+
+                                            variation.Stock = Math.Max(0, variation.Stock - 1);
+                                            stock.Quantity = Math.Max(0, stock.Quantity - 1);
+                                            stock.QuantityAvailable = Math.Max(0, stock.QuantityAvailable - 1);
+                                            stock.UpdatedAt = DateTime.UtcNow;
+                                            stock.UpdatedBy = request.UpdatedBy;
+
+                                            await stockRepository.UpdateAsync(stock);
+                                            salesOrderItem.StockIds.Add(stock.Id);
+                                            break;
+                                        }
+                                    }
+
+                                    if (hasStockAvailable) break;
+                                }
 
                                 if(!hasStockAvailable) return new(null, 404, $"O Produto [{product.Data.Code} - {product.Data.Name} | Serial: {salesOrderItem.Serial}] não tem estoque disponível");
-
-                                stock.Data.UpdatedAt = DateTime.UtcNow;
-                                stock.Data.UpdatedBy = request.UpdatedBy;
-                                stock.Data.Quantity -= 1;
-
-                                await stockRepository.UpdateAsync(stock.Data);
                             }
                             else
                             {
-                                VariationProduct? variation = stock.Data.Variations.Where(v => v.Code.ToString() == salesOrderItem.CodeVariation).FirstOrDefault();
-                                if(variation is null) return new(null, 404, $"O Produto [{product.Data.Code} - {product.Data.Name}] não tem estoque disponível");
-                                
-                                stock.Data.UpdatedAt = DateTime.UtcNow;
-                                stock.Data.UpdatedBy = request.UpdatedBy;
-                                stock.Data.Quantity -= 1;
-                                variation.Stock -= salesOrderItem.Quantity;
+                                bool hasStockAvailable = false;
+                                decimal remaining = salesOrderItem.Quantity;
 
-                                await stockRepository.UpdateAsync(stock.Data);
-                            };
-                        } 
+                                foreach (Stock stock in stocks.Data)
+                                {
+                                    if (stock.Variations is null) continue;
+
+                                    VariationProduct? variation = stock.Variations.FirstOrDefault(v => 
+                                        v.Code.ToString() == salesOrderItem.CodeVariation || 
+                                        v.Barcode == salesOrderItem.CodeVariation || 
+                                        v.VariationId == salesOrderItem.VariationId);
+
+                                    if (variation is not null && variation.Stock > 0)
+                                    {
+                                        decimal toDeduct = Math.Min(variation.Stock, remaining);
+                                        variation.Stock -= toDeduct;
+                                        stock.Quantity = Math.Max(0, stock.Quantity - toDeduct);
+                                        stock.QuantityAvailable = Math.Max(0, stock.QuantityAvailable - toDeduct);
+                                        stock.UpdatedAt = DateTime.UtcNow;
+                                        stock.UpdatedBy = request.UpdatedBy;
+
+                                        await stockRepository.UpdateAsync(stock);
+                                        salesOrderItem.StockIds.Add(stock.Id);
+                                        remaining -= toDeduct;
+
+                                        if (remaining <= 0)
+                                        {
+                                            hasStockAvailable = true;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                if(!hasStockAvailable && remaining > 0) return new(null, 404, $"O Produto [{product.Data.Code} - {product.Data.Name}] não tem estoque disponível");
+                            }
+                        }
                         else
                         {
                             ResponseApi<List<Stock>> stocks = await stockRepository.GetVerifyStockAll(salesOrderItem.ProductId, salesOrderItem.Plan, salesOrderItem.Company, salesOrderItem.Store);
